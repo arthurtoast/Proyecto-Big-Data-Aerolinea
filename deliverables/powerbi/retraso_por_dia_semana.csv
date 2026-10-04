@@ -1,0 +1,8 @@
+dia_semana,nombre_dia,vuelos_programados,vuelos_completados,vuelos_cancelados,vuelos_desviados,vuelos_con_retraso,tasa_retraso_pct,retraso_promedio_min,retraso_promedio_vuelos_retrasados_min,tasa_cancelacion_pct,prob_retraso_predicha_promedio_pct,minutos_predichos_promedio
+1,Lunes,1050150,1031857,15586,2707,245421,23.78,10.15,73.69,1.48,22.74,7.12
+2,Martes,945648,931999,11156,2493,171382,18.39,4.11,71.13,1.18,17.44,2.06
+3,Miercoles,966102,951705,12004,2393,183569,19.29,5.0,70.4,1.24,18.81,3.3
+4,Jueves,1040825,1021742,15934,3149,238281,23.32,9.55,71.68,1.53,22.81,7.07
+5,Viernes,1044333,1024839,16754,2740,238296,23.25,9.49,72.03,1.6,22.39,6.36
+6,Sabado,906398,890640,13273,2485,187061,21.0,6.91,72.63,1.46,19.96,4.44
+7,Domingo,1048162,1026702,18169,3291,270628,26.36,13.45,77.27,1.73,24.3,9.12

@@ -1,0 +1,15 @@
+codigo_aerolinea,nombre_aerolinea,tipo_aerolinea,vuelos_programados,vuelos_completados,vuelos_cancelados,vuelos_desviados,vuelos_con_retraso,tasa_retraso_pct,retraso_promedio_min,retraso_promedio_vuelos_retrasados_min,tasa_cancelacion_pct,prob_retraso_predicha_promedio_pct,minutos_predichos_promedio
+WN,Southwest Airlines,bajo_costo,1391885,1376837,11799,3249,294575,21.4,6.05,56.98,0.85,20.02,4.79
+DL,Delta Air Lines,principal,1026332,1012427,11114,2791,200402,19.79,5.69,73.28,1.08,18.93,3.15
+AA,American Airlines,principal,973653,952841,17679,3133,244989,25.71,13.69,83.3,1.82,24.96,9.16
+OO,SkyWest Airlines,regional,839821,825202,11843,2776,170996,20.72,9.15,83.81,1.41,19.96,5.82
+UA,United Airlines,principal,795271,786377,6527,2367,168815,21.47,7.31,72.54,0.82,20.74,5.0
+YX,Republic Airways,regional,346035,334043,11298,694,71857,21.51,6.39,71.86,3.26,19.68,3.88
+MQ,Envoy Air,regional,299322,291835,6713,774,61400,21.04,6.24,63.29,2.24,20.47,4.95
+OH,PSA Airlines,regional,248735,236682,11394,659,65158,27.53,17.32,91.06,4.58,26.11,11.43
+AS,Alaska Airlines,principal,245588,241927,2974,687,55887,23.1,4.8,51.37,1.21,23.19,4.25
+B6,JetBlue Airways,bajo_costo,231413,226703,3825,885,59288,26.15,10.95,76.14,1.65,24.23,7.6
+F9,Frontier Airlines,bajo_costo,198065,194192,3508,365,54202,27.91,14.84,84.41,1.77,27.42,9.94
+NK,Spirit Airlines,bajo_costo,194515,191191,2927,397,40931,21.41,6.6,74.37,1.5,20.17,3.94
+G4,Allegiant Air,bajo_costo,130899,129892,615,392,32428,24.97,13.01,85.39,0.47,23.55,8.25
+HA,Hawaiian Airlines,principal,80084,79335,660,89,13710,17.28,6.78,53.0,0.82,15.71,3.43

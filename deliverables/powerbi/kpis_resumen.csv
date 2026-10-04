@@ -1,0 +1,39 @@
+nombre,valor,unidad,descripcion
+Vuelos procesados (Bronze),7001619,vuelos,Registros BTS 2025 ingeridos sin transformar
+Vuelos completados (Silver),6879484,vuelos,"Vuelos que llegaron a destino, usados para modelar"
+Vuelos cancelados o desviados,122134,vuelos,Separados en su propia tabla para analisis
+Filas en FACT_VUELOS (Gold),7001618,filas,"Hechos del esquema estrella, con predicciones"
+Filas cargadas en MySQL (FACT_VUELOS),7001618,filas,Conteo exacto verificado con COUNT(*)
+Tamano CSV crudos,1141.3,MB,12 CSV mensuales del BTS
+Tamano Bronze (Parquet),123.2,MB,Parquet snappy particionado por mes
+Tamano Silver (Parquet),194.6,MB,Completados + cancelados/desviados + clima
+Tamano Gold (Parquet),233.8,MB,Hecho + 4 dimensiones
+Cobertura de clima (vuelos completados),78.44,%,Vuelos cuyo origen esta en el top 50 con clima
+Aeropuertos con clima,50,aeropuertos,Top 50 aeropuertos de origen por volumen
+Tasa de retraso global,22.31,%,Vuelos completados con llegada 15+ min tarde (ARR_DEL15)
+ROC AUC modelo,0.6589,0-1,"Regresion logistica, prueba nov-dic"
+ROC AUC baseline tasa por ruta,0.5687,0-1,Tasa historica de la ruta (ene-oct)
+Precision modelo,0.3711,0-1,"De los vuelos marcados con retraso, cuantos lo tuvieron"
+Recall modelo,0.4436,0-1,"De los vuelos con retraso, cuantos detecto"
+F1 modelo,0.4041,0-1,Media armonica de precision y recall
+Accuracy modelo,0.6898,0-1,Aciertos totales con umbral = tasa base de entrenamiento
+MAE modelo GBT,24.81,minutos,"Error absoluto medio, ARR_DELAY recortado [-37, 222]"
+RMSE modelo GBT,42.68,minutos,"Raiz del error cuadratico medio, ARR_DELAY recortado"
+MAE baseline media global,27.38,minutos,Predecir siempre la media de ene-oct
+MAE baseline promedio por ruta,27.23,minutos,Promedio historico de la ruta (ene-oct)
+Reduccion MAE vs media global,9.39,%,Mejora del modelo frente al metodo tradicional
+Reduccion MAE vs promedio por ruta,8.9,%,Mejora del modelo frente al promedio por ruta
+Reduccion RMSE vs media global,2.43,%,Mejora del modelo frente al metodo tradicional
+Reduccion RMSE vs promedio por ruta,1.95,%,Mejora del modelo frente al promedio por ruta
+Tiempo pipeline completo,439.1,segundos,"De zips a reporte, un comando, MacBook Air M4"
+Throughput pipeline,15945,filas/s,"7,001,619 filas / tiempo total"
+Tiempo ingesta Bronze,19.34,segundos,12 CSV a Parquet
+Throughput ingesta Bronze,362028,filas/s,Filas por segundo en la ingesta
+Tiempo descarga clima (inicial),237.3,segundos,50 llamadas a Open-Meteo; luego se usa cache
+Tiempo Silver,53.31,segundos,"Limpieza, separacion y union con clima"
+Tiempo Gold,12.83,segundos,Esquema estrella en Parquet
+Tiempo entrenamiento (3 modelos),114.31,segundos,Logistica + lineal + GBT
+Tiempo scoring 7M vuelos,27.94,segundos,pred_prob y pred_min escritos en Gold
+Tiempo carga MySQL,160.68,segundos,7M filas + indices + llaves foraneas
+Tiempo promedio por consulta de dashboard,0.348,segundos,Promedio de medianas de 5 consultas sobre Gold con Spark
+Costo por consulta,,USD,No calculado: completar con la tarifa de capacidad elegida (tiempo x precio)

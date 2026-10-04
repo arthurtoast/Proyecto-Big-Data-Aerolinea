@@ -1,0 +1,30 @@
+# Secretos
+.env
+
+# Datos (raw, bronze, silver, gold): se regeneran con el pipeline
+data/
+
+# Entorno virtual
+.venv/
+venv/
+
+# MLflow local (runs, artefactos y modelos pesados)
+mlruns/
+mlartifacts/
+mlflow.db
+
+# Python
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+
+# Spark
+spark-warehouse/
+metastore_db/
+derby.log
+
+# macOS
+.DS_Store
+
+# Zip de entrega: se regenera con make deliverables (el contenido ya esta en deliverables/)
+deliverables_fase3.zip

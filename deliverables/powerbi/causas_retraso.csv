@@ -1,0 +1,6 @@
+causa,columna_bts,minutos_totales,pct_minutos_de_retraso,vuelos_afectados,minutos_promedio_por_vuelo_afectado
+Avion tardio (vuelo anterior),LATE_AIRCRAFT_DELAY,43862971.0,39.19,774405,56.64
+Aerolinea,CARRIER_DELAY,36320477.0,32.45,805262,45.1
+Sistema aereo nacional (NAS),NAS_DELAY,24489666.0,21.88,793154,30.88
+Clima,WEATHER_DELAY,7108714.0,6.35,100103,71.01
+Seguridad,SECURITY_DELAY,152802.0,0.14,5100,29.96

@@ -1,0 +1,62 @@
+{
+  "registros_procesados": {
+    "bronze_total": 7001619,
+    "silver_completados": 6879484,
+    "silver_cancelados_desviados": 122134,
+    "gold_fact_vuelos": 7001618,
+    "mysql_fact_vuelos": 7001618
+  },
+  "tiempo_por_etapa_s": {
+    "organize": 8.15,
+    "bronze": 19.34,
+    "weather": 4.41,
+    "silver": 53.31,
+    "gold": 12.83,
+    "mysql": 160.68,
+    "models": 142.2,
+    "report": 5.81
+  },
+  "tiempo_total_s": 406.7,
+  "cobertura_clima_pct": {
+    "vuelos_completados_silver": 78.44,
+    "aeropuertos_con_clima": 50
+  },
+  "clasificacion_arr_del15": {
+    "roc_auc": 0.6589,
+    "precision": 0.3711,
+    "recall": 0.4436,
+    "f1": 0.4041,
+    "accuracy": 0.6898
+  },
+  "matriz_confusion": {
+    "tn": 658944,
+    "fp": 200993,
+    "fn": 148704,
+    "tp": 118579
+  },
+  "regresion_arr_delay_min": {
+    "modelo_en_produccion": "gbt",
+    "mae": 24.81,
+    "rmse": 42.68,
+    "baseline_lineal": {
+      "mae": 25.1,
+      "rmse": 43.07
+    },
+    "gbt": {
+      "mae": 24.81,
+      "rmse": 42.68
+    },
+    "recorte_min": [
+      -37.0,
+      222.0
+    ]
+  },
+  "tasa_retraso_global": 0.2231,
+  "graficas": {
+    "por_mes": "reports/retraso_por_mes.png",
+    "por_hora": "reports/retraso_por_hora.png",
+    "por_aerolinea": "reports/retraso_por_aerolinea.png",
+    "top_rutas": "reports/top10_rutas_retrasadas.png",
+    "efecto_clima": "reports/efecto_clima.png"
+  }
+}

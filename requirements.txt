@@ -1,0 +1,11 @@
+pyspark>=4.0,<4.1
+pandas>=2.2,<3  # PySpark 4.0 no es compatible con pandas 3 (falla la conversion con Arrow)
+pyarrow>=15
+scikit-learn>=1.5
+requests>=2.32
+python-dotenv>=1.0
+sqlalchemy>=2.0
+pymysql>=1.1
+cryptography>=42
+matplotlib>=3.8
+mlflow>=3.0

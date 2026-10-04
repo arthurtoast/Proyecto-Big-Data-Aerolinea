@@ -1,0 +1,503 @@
+{
+  "generado": "2026-10-04 14:58:09",
+  "maquina": {
+    "cpu": "Apple M4",
+    "nucleos_totales": 10,
+    "nucleos_rendimiento": 4,
+    "nucleos_eficiencia": 6,
+    "ram_gb": 16.0,
+    "modelo_equipo": "Mac16,13",
+    "sistema": "macOS 15.6",
+    "python": "3.12.15",
+    "spark": "4.0.4",
+    "java": "openjdk version \"17.0.20.1\" 2026-08-18",
+    "spark_master": "local[*]",
+    "spark_driver_memory": "6g",
+    "spark_shuffle_partitions": "32",
+    "mysql": {
+      "version": "26.7.0",
+      "innodb_buffer_pool_mb": 2048
+    }
+  },
+  "volumen": {
+    "filas": {
+      "raw_csv": 7001619,
+      "bronze": 7001619,
+      "silver_completados": 6879484,
+      "silver_cancelados_desviados": 122134,
+      "silver_clima_diario": 18250,
+      "gold": {
+        "FACT_VUELOS": 7001618,
+        "DIM_TIEMPO": 365,
+        "DIM_AEROLINEA": 14,
+        "DIM_AEROPUERTO": 352,
+        "DIM_CLIMA": 18251
+      }
+    },
+    "disco_mb": {
+      "raw_flights_csv": 1141.3,
+      "raw_weather_json": 1.4,
+      "raw_airports": 1.1,
+      "bronze": 123.2,
+      "silver": 194.6,
+      "silver_detalle": {
+        "flights": 187.7,
+        "flights_disrupted": 6.8,
+        "weather_daily": 0.1
+      },
+      "gold": 233.8,
+      "gold_detalle": {
+        "FACT_VUELOS": 233.6,
+        "DIM_TIEMPO": 0.0,
+        "DIM_AEROLINEA": 0.0,
+        "DIM_AEROPUERTO": 0.1,
+        "DIM_CLIMA": 0.2
+      },
+      "modelos": 0.6,
+      "mysql": {
+        "DIM_AEROLINEA": {
+          "filas_exactas": 14,
+          "mb": 0.0
+        },
+        "DIM_AEROPUERTO": {
+          "filas_exactas": 352,
+          "mb": 0.1
+        },
+        "DIM_CLIMA": {
+          "filas_exactas": 18251,
+          "mb": 2.9
+        },
+        "DIM_TIEMPO": {
+          "filas_exactas": 365,
+          "mb": 0.0
+        },
+        "FACT_VUELOS": {
+          "filas_exactas": 7001618,
+          "mb": 1865.3
+        }
+      }
+    },
+    "cobertura_clima_pct": {
+      "vuelos_completados": 78.44,
+      "todos_los_vuelos_gold": 78.4,
+      "aeropuertos_con_clima": 50,
+      "aeropuertos_totales": 352
+    }
+  },
+  "limpieza": {
+    "filas_bronze": 7001619,
+    "descartadas_clave_invalida_o_nula": 0,
+    "descartadas_duplicados_clave_negocio": 0,
+    "fecha_incoherente_con_year_month_day_o_day_of_week": 0,
+    "separadas_cancelados": 102876,
+    "separadas_desviados": 19258,
+    "descartadas_completados_sin_arr_delay": 1,
+    "completados_con_causas_nulas_rellenadas_con_0": 5344847,
+    "completados_con_dep_delay_nulo": 0,
+    "crs_dep_time_2400_tratado_como_hora_0": 1,
+    "completados_sin_clima_origen_has_weather_0": 1483300,
+    "filas_silver_completados": 6879484
+  },
+  "tiempos": {
+    "ingesta_bronze": {
+      "segundos": 19.34,
+      "filas": 7001619,
+      "filas_por_segundo": 362028
+    },
+    "clima_con_cache": {
+      "segundos": 4.41,
+      "filas": null,
+      "filas_por_segundo": null
+    },
+    "silver": {
+      "segundos": 53.31,
+      "filas": 7001619,
+      "filas_por_segundo": 131338
+    },
+    "gold": {
+      "segundos": 12.83,
+      "filas": 7001618,
+      "filas_por_segundo": 545722
+    },
+    "entrenamiento_3_modelos": {
+      "segundos": 114.31,
+      "filas": 5752264,
+      "filas_por_segundo": 50322
+    },
+    "scoring_y_escritura_gold": {
+      "segundos": 27.94,
+      "filas": 7001618,
+      "filas_por_segundo": 250595
+    },
+    "carga_mysql": {
+      "segundos": 160.68,
+      "filas": 7001618,
+      "filas_por_segundo": 43575
+    },
+    "organizar_zips": {
+      "segundos": 8.15,
+      "filas": 7001619,
+      "filas_por_segundo": 859094
+    },
+    "reporte": {
+      "segundos": 5.81,
+      "filas": null,
+      "filas_por_segundo": null
+    },
+    "detalle_entrenamiento_s": {
+      "regresion_logistica": 27.93,
+      "regresion_lineal": 14.23,
+      "gbt": 72.15
+    },
+    "clima_descarga_inicial_50_aeropuertos_s": 237.3,
+    "pipeline_completo_s": 439.1,
+    "pipeline_filas_por_segundo": 15945,
+    "pipeline_por_etapa_reloj_s": {
+      "organize": 8.2,
+      "bronze": 21.4,
+      "weather": 4.8,
+      "silver": 55.5,
+      "gold": 15.3,
+      "train": 311.3,
+      "report": 9.3,
+      "predict": 13.3
+    }
+  },
+  "consultas_dashboard": {
+    "consultas": {
+      "retraso_por_mes": {
+        "primera_s": 0.635,
+        "mediana_s": 0.217,
+        "min_s": 0.199,
+        "max_s": 0.635,
+        "repeticiones": 5
+      },
+      "retraso_por_aerolinea": {
+        "primera_s": 0.469,
+        "mediana_s": 0.304,
+        "min_s": 0.26,
+        "max_s": 0.469,
+        "repeticiones": 5
+      },
+      "top_rutas": {
+        "primera_s": 0.693,
+        "mediana_s": 0.398,
+        "min_s": 0.338,
+        "max_s": 0.693,
+        "repeticiones": 5
+      },
+      "efecto_clima": {
+        "primera_s": 0.568,
+        "mediana_s": 0.222,
+        "min_s": 0.194,
+        "max_s": 0.568,
+        "repeticiones": 5
+      },
+      "prediccion_un_vuelo": {
+        "primera_s": 0.642,
+        "mediana_s": 0.597,
+        "min_s": 0.573,
+        "max_s": 0.642,
+        "repeticiones": 5,
+        "arranque_carga_modelos_s": 8.641
+      }
+    },
+    "promedio_mediana_s": 0.348,
+    "metodo": "Spark local sobre Parquet de Gold, 5 repeticiones por consulta, tiempo de reloj hasta collect(). La primera repeticion incluye lectura de metadatos Parquet; la mediana representa el uso tipico.",
+    "costo_por_consulta_usd": null,
+    "costo_formula": "costo = mediana_s x precio_por_segundo_de_capacidad (no se inventan precios: completar con la tarifa de la capacidad de Fabric elegida)"
+  },
+  "evaluacion": {
+    "conjunto_prueba": {
+      "filas_prueba": 1127220,
+      "tasa_retraso_prueba": 0.23711697805219922,
+      "tasa_retraso_entrenamiento": 0.22032281550359997,
+      "umbral_clasificacion": 0.22032281550359997,
+      "media_retraso_entrenamiento_recortado_min": 6.485294311943958,
+      "vuelos_prueba_ruta_sin_historial": 1387
+    },
+    "clasificacion": {
+      "modelo_regresion_logistica": {
+        "roc_auc": 0.6588532360656064,
+        "accuracy": 0.6897704086158869,
+        "precision": 0.3710556619478553,
+        "recall": 0.44364587347493106,
+        "f1": 0.4041168602124886
+      },
+      "baseline_siempre_a_tiempo": {
+        "roc_auc": 0.5,
+        "accuracy": 0.7628830219478008,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0
+      },
+      "baseline_tasa_historica_ruta": {
+        "roc_auc": 0.5686582413209318,
+        "accuracy": 0.52953194584908,
+        "precision": 0.27158036604385716,
+        "recall": 0.5850353370771804,
+        "f1": 0.37095773615432337
+      }
+    },
+    "regresion": {
+      "modelo_gbt": {
+        "mae": 24.805957133478824,
+        "rmse": 42.683767253387146,
+        "mae_sin_recorte": 26.85924167420734,
+        "rmse_sin_recorte": 61.01686024698152
+      },
+      "baseline_media_global": {
+        "mae": 27.377687790041023,
+        "rmse": 43.748734463908015,
+        "mae_sin_recorte": 29.431465224792003,
+        "rmse_sin_recorte": 61.95820666450822,
+        "reduccion_mae_modelo_pct": 9.39352759182862,
+        "reduccion_rmse_modelo_pct": 2.4342811822349963
+      },
+      "baseline_promedio_ruta": {
+        "mae": 27.228570232345746,
+        "rmse": 43.5314042470658,
+        "mae_sin_recorte": 29.282347667096722,
+        "rmse_sin_recorte": 61.745719002583485,
+        "reduccion_mae_modelo_pct": 8.897320271297305,
+        "reduccion_rmse_modelo_pct": 1.9471850456921331
+      }
+    },
+    "matriz_confusion_modelo": {
+      "tn": 658944,
+      "fp": 200993,
+      "fn": 148704,
+      "tp": 118579
+    },
+    "recorte_arr_delay_min": [
+      -37.0,
+      222.0
+    ],
+    "pesos_clase": {
+      "retrasado": 2.2693972880526765,
+      "a_tiempo": 0.6412910496065807
+    }
+  },
+  "importancia_variables": {
+    "regresion_logistica_top15": [
+      {
+        "variable": "dep_hour = 6",
+        "tipo": "categoria (one-hot)",
+        "coeficiente": -1.0092880067172885,
+        "frecuencia_entrenamiento": 0.06901560846303299,
+        "importancia_estandarizada": 0.2558350085030998
+      },
+      {
+        "variable": "temp_max_c",
+        "tipo": "numerica (escalada)",
+        "coeficiente": -0.2369231247282528,
+        "frecuencia_entrenamiento": null,
+        "importancia_estandarizada": 0.2369231247282528
+      },
+      {
+        "variable": "temp_min_c",
+        "tipo": "numerica (escalada)",
+        "coeficiente": 0.21685513992608882,
+        "frecuencia_entrenamiento": null,
+        "importancia_estandarizada": 0.21685513992608882
+      },
+      {
+        "variable": "dep_hour = 7",
+        "tipo": "categoria (one-hot)",
+        "coeficiente": -0.742773987560534,
+        "frecuencia_entrenamiento": 0.07276769633660764,
+        "importancia_estandarizada": 0.19293911227767485
+      },
+      {
+        "variable": "dep_hour = 5",
+        "tipo": "categoria (one-hot)",
+        "coeficiente": -1.1480616008282616,
+        "frecuencia_entrenamiento": 0.028224539068443313,
+        "importancia_estandarizada": 0.1901347878930278
+      },
+      {
+        "variable": "month_cos",
+        "tipo": "numerica (escalada)",
+        "coeficiente": -0.1617747446630118,
+        "frecuencia_entrenamiento": null,
+        "importancia_estandarizada": 0.1617747446630118
+      },
+      {
+        "variable": "dep_hour = 8",
+        "tipo": "categoria (one-hot)",
+        "coeficiente": -0.5538457123334635,
+        "frecuencia_entrenamiento": 0.06942553401582403,
+        "importancia_estandarizada": 0.14077449507178685
+      },
+      {
+        "variable": "dep_hour = 19",
+        "tipo": "categoria (one-hot)",
+        "coeficiente": 0.5451518871266519,
+        "frecuencia_entrenamiento": 0.05483788643914814,
+        "importancia_estandarizada": 0.12411121469239716
+      },
+      {
+        "variable": "rain_flag",
+        "tipo": "numerica (escalada)",
+        "coeficiente": 0.1235936482290201,
+        "frecuencia_entrenamiento": null,
+        "importancia_estandarizada": 0.1235936482290201
+      },
+      {
+        "variable": "dep_hour = 17",
+        "tipo": "categoria (one-hot)",
+        "coeficiente": 0.49842266614279224,
+        "frecuencia_entrenamiento": 0.0628776773805931,
+        "importancia_estandarizada": 0.12098852189521339
+      },
+      {
+        "variable": "dep_hour = 18",
+        "tipo": "categoria (one-hot)",
+        "coeficiente": 0.5060121725616495,
+        "frecuencia_entrenamiento": 0.059546988803017384,
+        "importancia_estandarizada": 0.11974555945201323
+      },
+      {
+        "variable": "wind_max_kmh",
+        "tipo": "numerica (escalada)",
+        "coeficiente": 0.1081006436523625,
+        "frecuencia_entrenamiento": null,
+        "importancia_estandarizada": 0.1081006436523625
+      },
+      {
+        "variable": "dep_hour = 20",
+        "tipo": "categoria (one-hot)",
+        "coeficiente": 0.5133030886539628,
+        "frecuencia_entrenamiento": 0.04430829322159066,
+        "importancia_estandarizada": 0.10562708549665269
+      },
+      {
+        "variable": "dep_hour = 9",
+        "tipo": "categoria (one-hot)",
+        "coeficiente": -0.4407037011968481,
+        "frecuencia_entrenamiento": 0.0565716385756982,
+        "importancia_estandarizada": 0.10181236854044627
+      },
+      {
+        "variable": "dep_hour = 16",
+        "tipo": "categoria (one-hot)",
+        "coeficiente": 0.4252965865161953,
+        "frecuencia_entrenamiento": 0.057312390390983445,
+        "importancia_estandarizada": 0.09885532259654985
+      }
+    ],
+    "gbt_todas": [
+      {
+        "variable": "DEST",
+        "importancia": 0.2746596844191766
+      },
+      {
+        "variable": "ORIGIN",
+        "importancia": 0.26926287298919804
+      },
+      {
+        "variable": "dep_hour",
+        "importancia": 0.10985088820033452
+      },
+      {
+        "variable": "precip_mm",
+        "importancia": 0.07769037223422415
+      },
+      {
+        "variable": "month_cos",
+        "importancia": 0.04009411749344405
+      },
+      {
+        "variable": "OP_UNIQUE_CARRIER",
+        "importancia": 0.03908155628535947
+      },
+      {
+        "variable": "DAY_OF_WEEK",
+        "importancia": 0.03614610992406323
+      },
+      {
+        "variable": "temp_max_c",
+        "importancia": 0.03596629268266427
+      },
+      {
+        "variable": "wind_max_kmh",
+        "importancia": 0.035531967788845195
+      },
+      {
+        "variable": "month_sin",
+        "importancia": 0.03219814045736102
+      },
+      {
+        "variable": "temp_min_c",
+        "importancia": 0.022407603474975075
+      },
+      {
+        "variable": "snow_cm",
+        "importancia": 0.01761919340924584
+      },
+      {
+        "variable": "is_weekend",
+        "importancia": 0.005008408509025501
+      },
+      {
+        "variable": "DISTANCE",
+        "importancia": 0.003542148953629092
+      },
+      {
+        "variable": "snow_flag",
+        "importancia": 0.0005479755288879858
+      },
+      {
+        "variable": "rain_flag",
+        "importancia": 0.0003926676495660261
+      },
+      {
+        "variable": "high_wind_flag",
+        "importancia": 0.0
+      },
+      {
+        "variable": "has_weather",
+        "importancia": 0.0
+      }
+    ],
+    "regresion_logistica_top5_coeficiente_crudo": [
+      {
+        "variable": "DEST = ITH",
+        "tipo": "categoria (one-hot)",
+        "coeficiente": -5.7389019584888565,
+        "frecuencia_entrenamiento": 5.215337821768959e-07,
+        "importancia_estandarizada": 0.004144478725908083
+      },
+      {
+        "variable": "ORIGIN = ITH",
+        "tipo": "categoria (one-hot)",
+        "coeficiente": -4.553131462093656,
+        "frecuencia_entrenamiento": 6.953783762358613e-07,
+        "importancia_estandarizada": 0.003796825429589417
+      },
+      {
+        "variable": "DEST = EKO",
+        "tipo": "categoria (one-hot)",
+        "coeficiente": -1.8502501256114838,
+        "frecuencia_entrenamiento": 7.005937140576301e-05,
+        "importancia_estandarizada": 0.015486324200603599
+      },
+      {
+        "variable": "ORIGIN = AKN",
+        "tipo": "categoria (one-hot)",
+        "coeficiente": -1.7065995138645633,
+        "frecuencia_entrenamiento": 2.8684358019729276e-05,
+        "importancia_estandarizada": 0.009140037045786788
+      },
+      {
+        "variable": "DEST = TWF",
+        "tipo": "categoria (one-hot)",
+        "coeficiente": -1.4983279213794016,
+        "frecuencia_entrenamiento": 0.00010430675643537918,
+        "importancia_estandarizada": 0.015301726735406532
+      }
+    ],
+    "nota": "Regresion logistica: importancia = |coeficiente| x desviacion estandar de la variable (numericas ya escaladas: sd 1; categorias one-hot: sqrt(p(1-p)) con p su frecuencia en entrenamiento). Signo positivo = mas riesgo de retraso frente a la categoria de referencia. Sin estandarizar, el top lo dominan aeropuertos con muy pocos vuelos (ver top5_coeficiente_crudo). GBT: importancia por ganancia, suma 1."
+  },
+  "tasa_retraso_global": 0.2231
+}

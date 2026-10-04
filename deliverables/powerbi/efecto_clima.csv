@@ -1,0 +1,6 @@
+condicion,nombre_condicion,vuelos_programados,vuelos_completados,vuelos_cancelados,vuelos_desviados,vuelos_con_retraso,tasa_retraso_pct,retraso_promedio_min,retraso_promedio_vuelos_retrasados_min,tasa_cancelacion_pct,prob_retraso_predicha_promedio_pct,minutos_predichos_promedio,incluido_en_comparacion,diferencia_vs_despejado_pp,variacion_vs_despejado_pct
+despejado,Despejado,3710370,3670569,30425,9376,712578,19.41,4.54,65.2,0.82,18.51,2.35,1,0.0,0.0
+lluvia,Lluvia,1462605,1424325,33555,4725,418399,29.38,16.59,77.91,2.29,28.38,13.83,1,9.97,51.37
+nieve,Nieve,257040,243008,13400,632,87959,36.2,22.04,77.27,5.21,33.29,15.55,1,16.79,86.5
+viento_fuerte,Viento fuerte,59104,58282,652,170,14719,25.25,9.81,66.94,1.1,22.63,6.12,1,5.84,30.09
+sin_datos,Sin datos de clima,1512499,1483300,24844,4355,300983,20.29,8.28,83.41,1.64,19.44,4.71,0,,

@@ -1,0 +1,34 @@
+modelo,posicion,variable,tipo,importancia,coeficiente,efecto,frecuencia_entrenamiento_pct
+Regresion logistica (clasificacion),1,dep_hour = 6,categoria (one-hot),0.2558,-1.0093,reduce el riesgo,6.9
+Regresion logistica (clasificacion),2,temp_max_c,numerica (escalada),0.2369,-0.2369,reduce el riesgo,
+Regresion logistica (clasificacion),3,temp_min_c,numerica (escalada),0.2169,0.2169,aumenta el riesgo,
+Regresion logistica (clasificacion),4,dep_hour = 7,categoria (one-hot),0.1929,-0.7428,reduce el riesgo,7.28
+Regresion logistica (clasificacion),5,dep_hour = 5,categoria (one-hot),0.1901,-1.1481,reduce el riesgo,2.82
+Regresion logistica (clasificacion),6,month_cos,numerica (escalada),0.1618,-0.1618,reduce el riesgo,
+Regresion logistica (clasificacion),7,dep_hour = 8,categoria (one-hot),0.1408,-0.5538,reduce el riesgo,6.94
+Regresion logistica (clasificacion),8,dep_hour = 19,categoria (one-hot),0.1241,0.5452,aumenta el riesgo,5.48
+Regresion logistica (clasificacion),9,rain_flag,numerica (escalada),0.1236,0.1236,aumenta el riesgo,
+Regresion logistica (clasificacion),10,dep_hour = 17,categoria (one-hot),0.121,0.4984,aumenta el riesgo,6.29
+Regresion logistica (clasificacion),11,dep_hour = 18,categoria (one-hot),0.1197,0.506,aumenta el riesgo,5.95
+Regresion logistica (clasificacion),12,wind_max_kmh,numerica (escalada),0.1081,0.1081,aumenta el riesgo,
+Regresion logistica (clasificacion),13,dep_hour = 20,categoria (one-hot),0.1056,0.5133,aumenta el riesgo,4.43
+Regresion logistica (clasificacion),14,dep_hour = 9,categoria (one-hot),0.1018,-0.4407,reduce el riesgo,5.66
+Regresion logistica (clasificacion),15,dep_hour = 16,categoria (one-hot),0.0989,0.4253,aumenta el riesgo,5.73
+GBT (regresion de minutos),1,DEST,variable de entrada,0.2747,,,
+GBT (regresion de minutos),2,ORIGIN,variable de entrada,0.2693,,,
+GBT (regresion de minutos),3,dep_hour,variable de entrada,0.1099,,,
+GBT (regresion de minutos),4,precip_mm,variable de entrada,0.0777,,,
+GBT (regresion de minutos),5,month_cos,variable de entrada,0.0401,,,
+GBT (regresion de minutos),6,OP_UNIQUE_CARRIER,variable de entrada,0.0391,,,
+GBT (regresion de minutos),7,DAY_OF_WEEK,variable de entrada,0.0361,,,
+GBT (regresion de minutos),8,temp_max_c,variable de entrada,0.036,,,
+GBT (regresion de minutos),9,wind_max_kmh,variable de entrada,0.0355,,,
+GBT (regresion de minutos),10,month_sin,variable de entrada,0.0322,,,
+GBT (regresion de minutos),11,temp_min_c,variable de entrada,0.0224,,,
+GBT (regresion de minutos),12,snow_cm,variable de entrada,0.0176,,,
+GBT (regresion de minutos),13,is_weekend,variable de entrada,0.005,,,
+GBT (regresion de minutos),14,DISTANCE,variable de entrada,0.0035,,,
+GBT (regresion de minutos),15,snow_flag,variable de entrada,0.0005,,,
+GBT (regresion de minutos),16,rain_flag,variable de entrada,0.0004,,,
+GBT (regresion de minutos),17,high_wind_flag,variable de entrada,0.0,,,
+GBT (regresion de minutos),18,has_weather,variable de entrada,0.0,,,

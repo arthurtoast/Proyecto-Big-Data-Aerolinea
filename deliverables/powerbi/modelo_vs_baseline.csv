@@ -1,0 +1,7 @@
+tarea,opcion,es_modelo,roc_auc,accuracy,precision,recall,f1,mae_min,rmse_min,mae_sin_recorte_min,rmse_sin_recorte_min,reduccion_mae_del_modelo_pct,reduccion_rmse_del_modelo_pct
+Clasificacion ARR_DEL15,Modelo: regresion logistica,1,0.6589,0.6898,0.3711,0.4436,0.4041,,,,,,
+Clasificacion ARR_DEL15,Baseline: siempre a tiempo,0,0.5,0.7629,0.0,0.0,0.0,,,,,,
+Clasificacion ARR_DEL15,Baseline: tasa historica por ruta,0,0.5687,0.5295,0.2716,0.585,0.371,,,,,,
+Regresion minutos ARR_DELAY,Modelo: GBT,1,,,,,,24.81,42.68,26.86,61.02,,
+Regresion minutos ARR_DELAY,Baseline: media global,0,,,,,,27.38,43.75,29.43,61.96,9.39,2.43
+Regresion minutos ARR_DELAY,Baseline: promedio por ruta,0,,,,,,27.23,43.53,29.28,61.75,8.9,1.95

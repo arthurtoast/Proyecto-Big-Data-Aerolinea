@@ -1,0 +1,181 @@
+{
+  "bronze": {
+    "seconds": 19.34,
+    "rows": 7001619,
+    "rows_per_month": {
+      "01": 539747,
+      "02": 504884,
+      "03": 600872,
+      "04": 583950,
+      "05": 605648,
+      "06": 611575,
+      "07": 631428,
+      "08": 602378,
+      "09": 562439,
+      "10": 605844,
+      "11": 570550,
+      "12": 582304
+    }
+  },
+  "weather": {
+    "seconds": 4.41,
+    "airports_requested": 50,
+    "airports_ok": 50,
+    "airports_failed": [],
+    "airports_no_coords": [],
+    "flight_coverage_pct": 78.4
+  },
+  "silver": {
+    "seconds": 53.31,
+    "bronze_rows": 7001619,
+    "dow_mismatch": 0,
+    "dropped_invalid_key": 0,
+    "dropped_duplicates": 0,
+    "disrupted_rows": 122134,
+    "cancelled_rows": 102876,
+    "diverted_rows": 19258,
+    "dropped_completed_no_label": 1,
+    "silver_rows": 6879484,
+    "silver_with_weather": 5396184,
+    "weather_coverage_pct": 78.44,
+    "delay_rate_pct": 22.31,
+    "remaining_nulls": {
+      "precip_mm": 1483300,
+      "snow_cm": 1483300,
+      "wind_max_kmh": 1483300,
+      "temp_max_c": 1483300,
+      "temp_min_c": 1483300,
+      "rain_flag": 1483300,
+      "snow_flag": 1483300,
+      "high_wind_flag": 1483300
+    },
+    "weather_flag_pct": {
+      "rain_flag": 29.2,
+      "snow_flag": 4.5,
+      "high_wind_flag": 2.56
+    }
+  },
+  "gold": {
+    "seconds": 12.83,
+    "table_rows": {
+      "DIM_TIEMPO": 365,
+      "DIM_AEROLINEA": 14,
+      "DIM_AEROPUERTO": 352,
+      "DIM_CLIMA": 18251,
+      "FACT_VUELOS": 7001618
+    },
+    "fact_rows_expected": 7001618,
+    "fact_distinct_vuelo_key": 7001618,
+    "fact_with_weather": 5489119,
+    "fact_completed": 6879484
+  },
+  "mysql": {
+    "status": "ok",
+    "table_rows": {
+      "DIM_TIEMPO": 365,
+      "DIM_AEROLINEA": 14,
+      "DIM_AEROPUERTO": 352,
+      "DIM_CLIMA": 18251,
+      "FACT_VUELOS": 7001618
+    },
+    "fact_sample_pct": 100,
+    "fact_insert_seconds": 115.9,
+    "orphans": {
+      "fecha": 0,
+      "aerolinea": 0,
+      "origen": 0,
+      "destino": 0,
+      "clima": 0
+    },
+    "note": "indices+FK tardaron ~50 min por buffer pool 128MB y redo log 100MB (config por defecto)",
+    "seconds": 160.68,
+    "fact_mode": "auto",
+    "fact_rows": 7001618,
+    "fact_total_gold_rows": 7001618,
+    "fact_index_seconds": 43.6,
+    "fact_orphans": {
+      "fecha": 0,
+      "aerolinea": 0,
+      "origen": 0,
+      "destino": 0,
+      "clima": 0
+    }
+  },
+  "models": {
+    "logreg_s": 27.93,
+    "linreg_s": 14.23,
+    "gbt_s": 72.15,
+    "scoring_s": 27.94,
+    "best_regressor": "gbt",
+    "clip": [
+      -37.0,
+      222.0
+    ],
+    "logreg": {
+      "roc_auc": 0.658853133629869,
+      "precision": 0.3710556619478553,
+      "recall": 0.44364587347493106,
+      "f1": 0.40411686021248866,
+      "accuracy": 0.6897704086158869,
+      "mean_prob_raw": 0.4089376108422079,
+      "mean_prob_corrected": 0.17877640774250075,
+      "real_delay_rate_test": 0.23711697805219922,
+      "confusion_matrix": {
+        "tn": 658944,
+        "fp": 200993,
+        "fn": 148704,
+        "tp": 118579
+      }
+    },
+    "linreg": {
+      "mae": 25.09601909190198,
+      "rmse": 43.073115892540244,
+      "r2": 0.02974800184880122,
+      "rmse_sin_recorte": 61.45964255600285
+    },
+    "gbt": {
+      "mae": 24.806036866668627,
+      "rmse": 42.68381288090501,
+      "r2": 0.04720738714711936,
+      "rmse_sin_recorte": 61.016896691707046
+    }
+  },
+  "organize": {
+    "seconds": 8.15,
+    "rows": 7001619,
+    "duplicates": 0,
+    "errors": 0
+  },
+  "report": {
+    "seconds": 5.81
+  },
+  "pipeline": {
+    "seconds": 439.1,
+    "stages_wall_s": {
+      "organize": 8.2,
+      "bronze": 21.4,
+      "weather": 4.8,
+      "silver": 55.5,
+      "gold": 15.3,
+      "train": 311.3,
+      "report": 9.3,
+      "predict": 13.3
+    }
+  },
+  "pipeline_con_entregables": {
+    "seconds": 493.8,
+    "stages_wall_s": {
+      "organize": 8.2,
+      "bronze": 21.4,
+      "weather": 4.8,
+      "silver": 55.5,
+      "gold": 15.3,
+      "train": 311.3,
+      "report": 9.3,
+      "predict": 13.3,
+      "evaluate": 33.1,
+      "export": 11.7,
+      "figures": 9.9
+    }
+  }
+}
