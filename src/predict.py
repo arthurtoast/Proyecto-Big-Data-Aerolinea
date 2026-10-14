@@ -10,6 +10,9 @@ para un vuelo, usando los modelos entrenados en el Paso 6.
 - Clima: el del aeropuerto de origen ese dia si existe en Silver (en produccion seria el
   pronostico); si no, has_weather=0 y el modelo usa solo las demas variables.
 
+predict_many(consultas) hace lo mismo para varias consultas en un solo trabajo de Spark (la app
+demo lo usa para comparar horas y aerolineas sin pagar el costo de Spark por cada una).
+
 Uso: python -m src.predict  (imprime ejemplos)
 """
 import json
@@ -43,7 +46,19 @@ def _load(spark):
     aer = spark.read.parquet(GOLD_PATHS["DIM_AEROLINEA"]).toPandas()
     apt = spark.read.parquet(GOLD_PATHS["DIM_AEROPUERTO"]).toPandas().set_index("iata")
     routes = (spark.read.parquet(SILVER_FLIGHTS).groupBy("ORIGIN", "DEST")
-              .agg(F.percentile_approx("DISTANCE", 0.5).alias("d")).toPandas())
+              .agg(F.percentile_approx("DISTANCE", 0.5).alias("d"),
+                   F.count("*").alias("vuelos"), F.avg("ARR_DEL15").alias("tasa")).toPandas())
+    # Aerolineas que operaron cada ruta en 2025, de mayor a menor volumen.
+    rc = (spark.read.parquet(SILVER_FLIGHTS).groupBy("ORIGIN", "DEST", "OP_UNIQUE_CARRIER")
+          .count().toPandas().sort_values("count", ascending=False))
+    route_carriers = {}
+    for o, d, car in zip(rc["ORIGIN"], rc["DEST"], rc["OP_UNIQUE_CARRIER"]):
+        route_carriers.setdefault((o, d), []).append(car)
+    # Horas de salida programadas que tuvo cada ruta en 2025 (para no sugerir horas sin vuelos).
+    rh = spark.read.parquet(SILVER_FLIGHTS).select("ORIGIN", "DEST", "dep_hour").distinct().toPandas()
+    route_hours = {}
+    for o, d, h in zip(rh["ORIGIN"], rh["DEST"], rh["dep_hour"]):
+        route_hours.setdefault((o, d), set()).add(int(h))
     _cache.update(
         cfg=cfg, best=best,
         clf=PipelineModel.load(MODEL_PATHS["logreg"]),
@@ -53,6 +68,10 @@ def _load(spark):
         carrier_names=dict(zip(aer["codigo"], aer["nombre"])),
         airports=apt,
         routes={(o, d): float(x) for o, d, x in zip(routes["ORIGIN"], routes["DEST"], routes["d"])},
+        route_stats={(o, d): {"vuelos": int(v), "tasa_retraso": float(t)} for o, d, v, t in
+                     zip(routes["ORIGIN"], routes["DEST"], routes["vuelos"], routes["tasa"])},
+        route_carriers=route_carriers,
+        route_hours={k: sorted(v) for k, v in route_hours.items()},
         weather=weather_table(spark).cache(),
     )
     return _cache
@@ -64,10 +83,14 @@ def _haversine_miles(a, b):
     return 2 * 3958.8 * math.asin(math.sqrt(h))
 
 
-def predict(aerolinea: str, origen: str, destino: str, fecha, hora) -> dict:
-    spark = get_spark("predict")
-    c = _load(spark)
+def catalog() -> dict:
+    """Catalogos para una interfaz: aerolineas, aeropuertos, rutas con historial y sus
+    aerolineas. Carga los modelos si aun no estan cargados."""
+    return _load(get_spark("predict"))
 
+
+def _prepare(c, aerolinea, origen, destino, fecha, hora) -> dict:
+    """Valida y normaliza una consulta. Lanza ValueError con un mensaje claro si algo no cuadra."""
     carrier = c["carriers"].get(str(aerolinea).strip().upper())
     if carrier is None:
         raise ValueError(f"Aerolinea desconocida: {aerolinea}. Opciones: {sorted(c['carrier_names'])}")
@@ -75,6 +98,8 @@ def predict(aerolinea: str, origen: str, destino: str, fecha, hora) -> dict:
     for code in (origen, destino):
         if code not in c["airports"].index:
             raise ValueError(f"Aeropuerto desconocido: {code}")
+    if origen == destino:
+        raise ValueError("Origen y destino deben ser distintos")
     if isinstance(fecha, str):
         fecha = datetime.strptime(fecha, "%Y-%m-%d").date()
     if isinstance(hora, str):
@@ -89,30 +114,57 @@ def predict(aerolinea: str, origen: str, destino: str, fecha, hora) -> dict:
         if any(math.isnan(x) for x in [a["latitud"], b["latitud"]]):
             raise ValueError("Ruta sin historial y sin coordenadas para estimar la distancia")
         distance, distance_src = round(_haversine_miles(a, b)), "linea recta (ruta sin historial)"
+    return {"carrier": carrier, "origen": origen, "destino": destino, "fecha": fecha,
+            "hora": int(hora), "distance": distance, "distance_src": distance_src}
 
-    row = spark.createDataFrame([Row(
-        OP_UNIQUE_CARRIER=carrier, ORIGIN=origen, DEST=destino, FL_DATE=fecha,
-        MONTH=fecha.month, DAY_OF_WEEK=fecha.isoweekday(),  # 1=lunes, igual que el BTS
-        dep_hour=int(hora), DISTANCE=float(distance))])
-    row = row.join(c["weather"], ["ORIGIN", "FL_DATE"], "left")
-    row = add_model_columns(row)
 
-    p = c["clf"].transform(row).select(
-        prior_corrected(vector_to_array("probability")[1], c["cfg"]["w_pos"], c["cfg"]["w_neg"])
-        .alias("p"), *INPUT_COLS).first()
-    minutes = c["reg"].transform(row.select(*INPUT_COLS)).select("prediction").first()[0]
+def predict_many(consultas) -> list[dict]:
+    """Predice varias consultas (tuplas aerolinea, origen, destino, fecha, hora) en un solo
+    trabajo de Spark. Devuelve los resultados en el mismo orden."""
+    spark = get_spark("predict")
+    c = _load(spark)
+    prep = [_prepare(c, *q) for q in consultas]
+    if not prep:
+        return []
 
-    return {
-        "aerolinea": f"{carrier} ({c['carrier_names'][carrier]})",
-        "ruta": f"{origen} -> {destino}",
-        "fecha": fecha.isoformat(), "hora": int(hora),
-        "prob_retraso": round(float(p["p"]), 3),
-        "minutos_estimados": round(float(minutes), 1),
-        "distancia_millas": distance, "distancia_fuente": distance_src,
-        "clima_usado": ({k: p[k] for k in WEATHER_NUM} if p["has_weather"] else
-                        "sin datos (origen fuera del top 50 o fecha fuera de 2025)"),
-        "modelo_minutos": c["best"],
-    }
+    rows = spark.createDataFrame([Row(
+        _i=i, OP_UNIQUE_CARRIER=q["carrier"], ORIGIN=q["origen"], DEST=q["destino"],
+        FL_DATE=q["fecha"], MONTH=q["fecha"].month,
+        DAY_OF_WEEK=q["fecha"].isoweekday(),  # 1=lunes, igual que el BTS
+        dep_hour=q["hora"], DISTANCE=float(q["distance"])) for i, q in enumerate(prep)])
+    rows = add_model_columns(rows.join(c["weather"], ["ORIGIN", "FL_DATE"], "left"))
+
+    scored = c["clf"].transform(rows).select(
+        "_i", *INPUT_COLS,
+        prior_corrected(vector_to_array("probability")[1], c["cfg"]["w_pos"], c["cfg"]["w_neg"]).alias("p"))
+    # Solo _i, p y las entradas: las columnas que agrega el pipeline de clasificacion
+    # chocarian con las del pipeline de regresion.
+    out = {r["_i"]: r for r in c["reg"].transform(scored).select(
+        "_i", "p", "prediction", *WEATHER_NUM, "has_weather").collect()}
+
+    results = []
+    for i, q in enumerate(prep):
+        r = out[i]
+        results.append({
+            "aerolinea": f"{q['carrier']} ({c['carrier_names'][q['carrier']]})",
+            "codigo_aerolinea": q["carrier"],
+            "ruta": f"{q['origen']} -> {q['destino']}",
+            "fecha": q["fecha"].isoformat(), "hora": q["hora"],
+            "prob_retraso": round(float(r["p"]), 3),
+            "minutos_estimados": round(float(r["prediction"]), 1),
+            "distancia_millas": q["distance"], "distancia_fuente": q["distance_src"],
+            "clima_usado": ({k: r[k] for k in WEATHER_NUM} if r["has_weather"] else
+                            "sin datos (origen fuera del top 50 o fecha fuera de 2025)"),
+            "modelo_minutos": c["best"],
+        })
+    return results
+
+
+def predict(aerolinea: str, origen: str, destino: str, fecha, hora) -> dict:
+    """Prediccion de un vuelo (ver docstring del modulo)."""
+    r = predict_many([(aerolinea, origen, destino, fecha, hora)])[0]
+    r.pop("codigo_aerolinea")
+    return r
 
 
 if __name__ == "__main__":
