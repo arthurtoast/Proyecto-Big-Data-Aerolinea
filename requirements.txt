@@ -9,3 +9,4 @@ pymysql>=1.1
 cryptography>=42
 matplotlib>=3.8
 mlflow>=3.0
+streamlit>=1.40

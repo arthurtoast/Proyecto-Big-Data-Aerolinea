@@ -138,6 +138,25 @@ predict("AA", "ORD", "LGA", "2025-12-22", "17:45")
 Acepta la aerolinea por codigo (`AA`) o nombre (`American Airlines`) y la hora como `17` o
 `"17:45"`. Si la ruta no tiene historial, usa la distancia en linea recta entre aeropuertos.
 
+## Demo de la app freemium
+
+```zsh
+make app        # o: .venv/bin/streamlit run app/demo_app.py  ->  http://localhost:8501
+```
+
+Requiere haber corrido el pipeline (usa los modelos de `data/models` y los catalogos de Gold y
+Silver). La primera consulta tarda unos 10 s mientras carga Spark y los modelos; despues cada
+consulta tarda menos de un segundo.
+
+| Plan | Que muestra |
+|---|---|
+| Gratis | Probabilidad de llegar 15+ min tarde, nivel de riesgo (bajo, moderado, alto) y tasa historica de la ruta |
+| Premium (simulado con un interruptor, sin pagos) | Ademas: minutos estimados, clima del origen ese dia, mejor hora para volar (solo horas con salidas reales en la ruta) y comparacion de las aerolineas de la ruta |
+
+Todas las predicciones de una consulta (el vuelo, cada hora del dia y cada aerolinea) se
+calculan en un solo trabajo de Spark con `predict_many()`. La demo usa fechas de 2025 porque es
+el ano con clima historico descargado.
+
 ## Arquitectura medallon
 
 ```mermaid
@@ -436,8 +455,9 @@ Pasos:
 │   ├── features.py        variables del modelo (regla de fuga de datos)
 │   ├── train.py           Paso 6: modelos, MLflow, predicciones
 │   ├── report.py          Paso 7: KPIs y graficas
-│   ├── predict.py         Paso 7: predict(aerolinea, origen, destino, fecha, hora)
+│   ├── predict.py         Paso 7: predict() y predict_many()
 │   └── run_pipeline.py    orquestador
+├── app/demo_app.py        demo Streamlit de la app freemium (make app)
 ├── notebooks/             (opcional)
 ├── reports/               kpis.json, stage_metrics.json, graficas PNG
 └── data/                  (ignorado en git) raw, bronze, silver, gold, models

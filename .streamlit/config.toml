@@ -1,0 +1,6 @@
+# Configuracion de la demo (make app). El color primario es el azul de las figuras del proyecto.
+[theme]
+primaryColor = "#2a78d6"
+
+[browser]
+gatherUsageStats = false

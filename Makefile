@@ -1,13 +1,14 @@
 # Atajos para el pipeline. Todo usa el Python del entorno virtual .venv.
 PY := .venv/bin/python
 
-.PHONY: help venv all organize bronze weather silver gold mysql train report predict evaluate export figures summary deliverables mlflow-ui clean-derived
+.PHONY: help venv all organize bronze weather silver gold mysql train report predict evaluate export figures summary deliverables app mlflow-ui clean-derived
 
 help:
 	@echo "make venv        crea .venv (Python 3.12) e instala requirements.txt"
 	@echo "make all         corre el pipeline completo (python -m src.run_pipeline)"
 	@echo "make organize | bronze | weather | silver | gold | mysql | train | report | predict"
 	@echo "make deliverables  indicadores + CSV Power BI + figuras + zip de entrega"
+	@echo "make app         demo de la app freemium en http://localhost:8501"
 	@echo "make mlflow-ui   abre la UI de MLflow en http://127.0.0.1:5000"
 	@echo "make clean-derived  borra bronze/silver/gold/models (NO toca data/raw)"
 
@@ -61,6 +62,9 @@ summary:
 deliverables: evaluate export figures summary
 	rm -f deliverables_fase3.zip
 	zip -r -X deliverables_fase3.zip deliverables -x "*.DS_Store"
+
+app:
+	.venv/bin/streamlit run app/demo_app.py
 
 mlflow-ui:
 	.venv/bin/mlflow ui --backend-store-uri sqlite:///mlflow.db
