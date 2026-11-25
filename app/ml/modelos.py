@@ -2,7 +2,30 @@
 Clases que se guardan con joblib. Viven en app/ml/ para que la app las pueda importar al
 cargar los .joblib (joblib/pickle guarda la ruta app.ml.modelos.<Clase>). Sin pyspark.
 """
+import json
+import os
+
 import numpy as np
+
+
+def mes_desde_ciclico(X):
+    """[month_sin, month_cos] -> MONTH (1-12) como columna. Lo usa la variante con mes
+    categorico: asi recibe las mismas 18 variables que el clasificador actual. Funcion de
+    modulo (no lambda) para que joblib la pueda guardar."""
+    X = np.asarray(X, dtype="float64")
+    mes = (np.rint(np.arctan2(X[:, 0], X[:, 1]) * 12 / (2 * np.pi)).astype(int) % 12) + 1
+    return mes.reshape(-1, 1)
+
+
+def cargar_modelos(models_dir):
+    """Carga (clasificador, regresor) segun metadata.json: el clasificador es el indicado en
+    "clasificador_activo" (por defecto clasificador.joblib)."""
+    import joblib
+    with open(os.path.join(models_dir, "metadata.json")) as fh:
+        meta = json.load(fh)
+    activo = meta.get("clasificador_activo", "clasificador.joblib")
+    return (joblib.load(os.path.join(models_dir, activo)),
+            joblib.load(os.path.join(models_dir, "regresor.joblib")))
 
 
 def prior_corrected(p, w_pos, w_neg):

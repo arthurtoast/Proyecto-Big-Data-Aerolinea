@@ -8,6 +8,7 @@ Spark MLlib (`src/train.py`) en scikit-learn, sin importar pyspark.
 | juego | archivos | entrenamiento | para qué |
 |---|---|---|---|
 | **producción** | `app/models/clasificador.joblib`, `app/models/regresor.joblib` | ene-dic 2025 (6,879,484 vuelos) | lo usa la app |
+| **variante de producción** | `app/models/clasificador_mes.joblib` | ene-dic 2025 | clasificador alternativo, con el mes categórico |
 | **evaluación** | `app/models/eval/clasificador_ene_oct.joblib`, `app/models/eval/regresor_ene_oct.joblib` | ene-oct 2025 (5,752,264 vuelos) | métricas de prueba (nov-dic), comparación con Spark y verificaciones |
 
 - **Métricas:** todas las de este documento y de `metadata.json` (`metricas_prueba`,
@@ -85,6 +86,46 @@ mismos datos con que se entrenó.
   formar picos como el de diciembre. Es la misma limitación del modelo de Spark, que usa las
   mismas variables.
 
+### Variante del clasificador con el mes categórico (`clasificador_mes.joblib`)
+
+- **Qué cambia:** además de `month_sin` y `month_cos`, agrega el mes como variable categórica
+  (one-hot, 12 columnas más: 774 coeficientes contra 762). Todo lo demás es igual: los mismos
+  pesos ene-dic, la corrección, el C y el escalado.
+- **Entrada:** el mes se reconstruye de `month_sin` y `month_cos` dentro del pipeline, así que
+  la variante recibe exactamente las mismas 18 variables de `flight_features()` y la app no
+  cambia.
+- **Modelo de evaluación:** no cambia. Sigue igual a Spark.
+
+Ajuste **dentro del entrenamiento** (ene-dic). **No es una prueba**: los dos modelos se miden
+sobre los mismos datos con que se entrenaron, y la variante tiene 12 parámetros más.
+
+| mes | tasa real 2025 | prob. predicha actual | prob. predicha variante |
+|---|---|---|---|
+| 1 | 0.188 | 0.203 | 0.192 |
+| 2 | 0.208 | 0.213 | 0.211 |
+| 3 | 0.196 | 0.219 | 0.197 |
+| 4 | 0.197 | 0.221 | 0.198 |
+| 5 | 0.236 | 0.240 | 0.234 |
+| 6 | 0.283 | 0.246 | 0.278 |
+| 7 | 0.289 | 0.241 | 0.284 |
+| 8 | 0.226 | 0.236 | 0.224 |
+| 9 | 0.166 | 0.220 | 0.166 |
+| 10 | 0.203 | 0.213 | 0.203 |
+| 11 | 0.206 | 0.207 | 0.206 |
+| 12 | 0.268 | 0.207 | 0.270 |
+| **AUC / Brier (dentro del entrenamiento)** | | 0.6806 / 0.16047 | 0.6873 / 0.15932 |
+
+- **Lo que muestra la tabla:** la variante reproduce la tasa de cada mes de 2025, con una
+  diferencia máxima de 0.6 puntos. El actual se desvía hasta 6 puntos.
+- **Lo que no muestra:** si eso generaliza a 2026. La variante memoriza la tasa de cada mes de
+  un solo año; si 2026 tiene otra estacionalidad, puede empeorar. **Por eso no se elige
+  todavía:** se decide con la validación 2026 (Paso 5).
+
+**Cómo se elige:** `metadata.json` tiene la clave `"clasificador_activo"`, que hoy vale
+`"clasificador.joblib"`; para usar la variante se cambia a `"clasificador_mes.joblib"`. La app
+debe cargar los modelos con `app.ml.modelos.cargar_modelos("app/models")`, que lee esa clave.
+El regresor es el mismo en los dos casos.
+
 ### Prueba de carga (`app/ml/smoke_test.py`)
 
 AA DFW-ORD a las 18 h, con el clima promedio de DFW de la misma semana ISO de 2025 (semana 11
@@ -93,9 +134,14 @@ y semana 51):
 | fecha | modelo | prob. retraso | minutos |
 |---|---|---|---|
 | 2026-03-15 | producción ene-dic | 0.496 | 30.1 |
+| 2026-03-15 | variante con mes ene-dic | 0.465 | 30.1 |
 | 2026-03-15 | evaluación ene-oct | 0.467 | 17.8 |
 | 2026-12-20 | producción ene-dic | 0.488 | 42.7 |
+| 2026-12-20 | variante con mes ene-dic | 0.586 | 42.7 |
 | 2026-12-20 | evaluación ene-oct | 0.425 | 20.5 |
+
+- **Variante:** en marzo baja la probabilidad y en diciembre la sube, igual que la tasa real de
+  esos meses en 2025 (0.196 y 0.268).
 
 - **Por qué cambian los minutos:** es un efecto de los datos. Los vuelos AA DFW-ORD de domingo
   entre las 17 y las 19 h tuvieron en 2025 una tasa de retraso de 0.553 y 38.1 min de media
@@ -208,11 +254,10 @@ Requisitos:
 ## Uso en la app
 
 ```python
-import joblib
 from app.ml.features import clima_con_banderas, flight_features
+from app.ml.modelos import cargar_modelos
 
-cls = joblib.load("app/models/clasificador.joblib")   # producción (ene-dic)
-reg = joblib.load("app/models/regresor.joblib")
+cls, reg = cargar_modelos("app/models")   # producción; clasificador según "clasificador_activo"
 clima = clima_con_banderas(precip_mm=0.06, snow_cm=0.0, wind_max_kmh=18.9,
                            temp_max_c=25.19, temp_min_c=11.37)   # o {"has_weather": 0}
 X = flight_features("AA", "DFW", "ORD", MONTH=3, DAY_OF_WEEK=7, dep_hour=18, DISTANCE=802,

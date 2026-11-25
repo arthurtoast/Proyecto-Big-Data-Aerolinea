@@ -33,19 +33,23 @@ import sklearn  # noqa: E402
 from sklearn.compose import ColumnTransformer  # noqa: E402
 from sklearn.ensemble import HistGradientBoostingRegressor  # noqa: E402
 from sklearn.linear_model import LogisticRegression  # noqa: E402
+from sklearn.metrics import brier_score_loss, roc_auc_score  # noqa: E402
 from sklearn.pipeline import Pipeline  # noqa: E402
-from sklearn.preprocessing import OneHotEncoder, OrdinalEncoder, StandardScaler  # noqa: E402
+from sklearn.preprocessing import (FunctionTransformer, OneHotEncoder,  # noqa: E402
+                                   OrdinalEncoder, StandardScaler)
 
 from app.ml import datos, metricas  # noqa: E402
 from app.ml.features import (CATEGORICAL, CYCLIC_SMALL, INPUT_COLS, LEAKAGE_COLS,  # noqa: E402
                              NUMERIC, check_no_leakage)
-from app.ml.modelos import ClasificadorCorregido, RegresorRecortado  # noqa: E402
+from app.ml.modelos import (ClasificadorCorregido, RegresorRecortado,  # noqa: E402
+                            mes_desde_ciclico)
 
 ROOT = datos.ROOT
 MODELS_DIR = os.path.join(ROOT, "app", "models")
 EVAL_DIR = os.path.join(MODELS_DIR, "eval")
 PROD_PATHS = {"cls": os.path.join(MODELS_DIR, "clasificador.joblib"),
-              "reg": os.path.join(MODELS_DIR, "regresor.joblib")}
+              "reg": os.path.join(MODELS_DIR, "regresor.joblib"),
+              "cls_mes": os.path.join(MODELS_DIR, "clasificador_mes.joblib")}
 EVAL_PATHS = {"cls": os.path.join(EVAL_DIR, "clasificador_ene_oct.joblib"),
               "reg": os.path.join(EVAL_DIR, "regresor_ene_oct.joblib")}
 CLIP_PATH = os.path.join(ROOT, "data", "models", "clip_and_prior.json")
@@ -80,17 +84,22 @@ def print_reg(nombre, m):
 
 
 # ---------------------------------------------------------------- 1B
-def clasificador_pipeline(n_train):
+def clasificador_pipeline(n_train, con_mes=False):
     # Spark: regParam * 1/2 ||b||^2 + (1/sum w) * sum w_i * logloss_i.
     # sklearn: 1/2 ||b||^2 + C * sum w_i * logloss_i. Dividiendo sklearn por C*sum(w) quedan
     # iguales si 1/(C*sum w) = regParam, o sea C = 1/(regParam*sum w). Con pesos balanceados
     # sum w = n_pos*n/(2n_pos) + n_neg*n/(2n_neg) = n, asi que C = 1/(regParam*n).
     C = 1.0 / (REG_PARAM * n_train)
-    pre = ColumnTransformer(
-        [("ohe", OneHotEncoder(handle_unknown="ignore"), CATEGORICAL + CYCLIC_SMALL),
-         # Como StandardScaler(withMean=False) de Spark: divide por la desviacion, no centra.
-         ("num", StandardScaler(with_mean=False), NUMERIC)],
-        sparse_threshold=1.0)
+    partes = [("ohe", OneHotEncoder(handle_unknown="ignore"), CATEGORICAL + CYCLIC_SMALL)]
+    if con_mes:
+        # Variante: el mes tambien como categorico (one-hot), ademas de month_sin/month_cos.
+        # El mes se reconstruye de month_sin/month_cos, asi la entrada sigue siendo la misma.
+        partes.append(("mes", Pipeline([
+            ("mes", FunctionTransformer(mes_desde_ciclico)),
+            ("ohe", OneHotEncoder(handle_unknown="ignore"))]), ["month_sin", "month_cos"]))
+    # Como StandardScaler(withMean=False) de Spark: divide por la desviacion, no centra.
+    partes.append(("num", StandardScaler(with_mean=False), NUMERIC))
+    pre = ColumnTransformer(partes, sparse_threshold=1.0)
     return Pipeline([
         ("pre", pre),
         # Spark LogisticRegression tiene standardization=True por defecto: internamente
@@ -316,6 +325,17 @@ def paso_produccion(tr, te, clip, n_trees):
     cls = ClasificadorCorregido(pipe, w_pos, w_neg)
     print(f"Clasificador: {cls_s:.1f} s | iteraciones lbfgs {n_iter}")
 
+    # Variante: mes categorico ademas de month_sin/month_cos; todo lo demas igual.
+    pipe_m, _ = clasificador_pipeline(n, con_mes=True)
+    t = time.time()
+    pipe_m.fit(full[INPUT_COLS], full["ARR_DEL15"],
+               std__sample_weight=np.where(full["ARR_DEL15"].to_numpy() == 1, w_pos, w_neg))
+    cls_mes_s = time.time() - t
+    n_iter_mes = int(pipe_m.named_steps["lr"].n_iter_[0])
+    cls_mes = ClasificadorCorregido(pipe_m, w_pos, w_neg)
+    print(f"Clasificador variante con mes categorico: {cls_mes_s:.1f} s | iteraciones lbfgs "
+          f"{n_iter_mes} | coeficientes {pipe_m.named_steps['lr'].coef_.shape[1]}")
+
     y = full["ARR_DELAY"].clip(clip["p01"], clip["p99"])
     rpipe = Pipeline([("pre", arbol_pre()), ("hgb", hgb(max_iter=n_trees, early_stopping=False))])
     t = time.time()
@@ -327,11 +347,13 @@ def paso_produccion(tr, te, clip, n_trees):
 
     # Ajuste DENTRO del entrenamiento (no es una metrica de prueba).
     p = cls.predict_proba(full[INPUT_COLS])[:, 1]
+    p_mes = cls_mes.predict_proba(full[INPUT_COLS])[:, 1]
     m = reg.predict(full[INPUT_COLS])
     por_mes = (pd.DataFrame({"MONTH": full["MONTH"].to_numpy(), "y": full["ARR_DEL15"].to_numpy(),
-                             "p": p, "min_real": y.to_numpy(), "min_pred": m})
+                             "p": p, "p_mes": p_mes, "min_real": y.to_numpy(), "min_pred": m})
                .groupby("MONTH").agg(vuelos=("y", "size"), tasa_real=("y", "mean"),
                                      prob_media_corregida=("p", "mean"),
+                                     prob_media_variante_mes=("p_mes", "mean"),
                                      minutos_reales_media=("min_real", "mean"),
                                      minutos_predichos_media=("min_pred", "mean")))
     print(f"Ajuste en ene-dic (dentro del entrenamiento): prob media corregida {p.mean():.4f} | "
@@ -343,15 +365,23 @@ def paso_produccion(tr, te, clip, n_trees):
             "w_pos": w_pos, "w_neg": w_neg, "C": C, "iteraciones_lbfgs": n_iter,
             "arboles": int(rpipe.named_steps["hgb"].n_iter_),
             "umbral_en_prob_corregida": cls.umbral_corregido,
-            "tiempos_s": {"clasificador": cls_s, "regresor": reg_s},
+            "tiempos_s": {"clasificador": cls_s, "clasificador_mes": cls_mes_s, "regresor": reg_s},
+            "variante_mes": {"iteraciones_lbfgs": n_iter_mes,
+                             "coeficientes": int(pipe_m.named_steps["lr"].coef_.shape[1]),
+                             "roc_auc_en_entrenamiento": float(roc_auc_score(full["ARR_DEL15"], p_mes)),
+                             "brier_en_entrenamiento": float(brier_score_loss(full["ARR_DEL15"], p_mes))},
+            "actual_en_entrenamiento": {
+                "roc_auc": float(roc_auc_score(full["ARR_DEL15"], p)),
+                "brier": float(brier_score_loss(full["ARR_DEL15"], p))},
             "ajuste_en_entrenamiento": {
                 "nota": "calculado sobre los mismos datos de entrenamiento (ene-dic); NO es una "
                         "metrica de prueba",
                 "tasa_real": n_pos / n, "prob_media_corregida": float(p.mean()),
+                "prob_media_variante_mes": float(p_mes.mean()),
                 "minutos_reales_media_recortada": float(y.mean()),
                 "minutos_predichos_media": float(m.mean()),
                 "por_mes": por_mes.round(4).reset_index().to_dict("records")}}
-    return cls, reg, info
+    return cls, cls_mes, reg, info
 
 
 # ---------------------------------------------------------------- main
@@ -377,12 +407,13 @@ def main():
     cmp = paso_1d(tr, te, clip, sk)
     print_tabla(cmp["tabla"])
 
-    prod_cls, prod_reg, prod = paso_produccion(tr, te, clip, reg_info["best_iter"])
+    prod_cls, prod_cls_mes, prod_reg, prod = paso_produccion(tr, te, clip, reg_info["best_iter"])
     joblib.dump(prod_cls, PROD_PATHS["cls"], compress=3)
+    joblib.dump(prod_cls_mes, PROD_PATHS["cls_mes"], compress=3)
     joblib.dump(prod_reg, PROD_PATHS["reg"], compress=3)
 
     print("\n===== 1E Guardado =====")
-    for p in [PROD_PATHS["cls"], PROD_PATHS["reg"], cls_path, reg_path]:
+    for p in [PROD_PATHS["cls"], PROD_PATHS["cls_mes"], PROD_PATHS["reg"], cls_path, reg_path]:
         mb = du_mb(p)
         print(f"{os.path.relpath(p, ROOT)}: {mb:.2f} MB {'(OK < 50 MB)' if mb < 50 else '(EXCEDE 50 MB)'}")
         assert mb < 50
@@ -395,6 +426,14 @@ def main():
         "variables": {"input_cols": INPUT_COLS, "categorical": CATEGORICAL,
                       "cyclic_small": CYCLIC_SMALL, "numeric": NUMERIC,
                       "leakage_cols_prohibidas": LEAKAGE_COLS},
+        "clasificador_activo": "clasificador.joblib",
+        "clasificador_activo_opciones": {
+            "clasificador.joblib": "produccion ene-dic, mismas 18 variables que Spark (mes solo "
+                                   "como month_sin/month_cos)",
+            "clasificador_mes.joblib": "variante produccion ene-dic: ademas el mes como "
+                                       "categorico (one-hot); misma configuracion en lo demas",
+            "nota": "pendiente de decidir con la validacion 2026 (Paso 5). La app debe cargar el "
+                    "clasificador con app.ml.modelos.cargar_modelos(), que lee esta clave."},
         "recorte_arr_delay": {"p01": clip["p01"], "p99": clip["p99"],
                               "fuente": "data/models/clip_and_prior.json (Spark, p01/p99 de ene-oct); "
                                         "se usan en evaluacion y en produccion"},
@@ -403,7 +442,9 @@ def main():
                     "que el de evaluacion. NO tiene metrica de prueba propia: no quedan datos de "
                     "2025 fuera del entrenamiento. Las metricas de referencia son las del modelo "
                     "de evaluacion (seccion metricas_prueba).",
-            "archivos": {"clasificador": "clasificador.joblib", "regresor": "regresor.joblib"},
+            "archivos": {"clasificador": "clasificador.joblib",
+                         "clasificador_variante_mes": "clasificador_mes.joblib",
+                         "regresor": "regresor.joblib"},
             "entrenamiento": {"meses": list(range(1, 13)), "fechas": prod["fechas"],
                               "filas": prod["filas"]},
             "pesos_clase": {"w_pos": prod["w_pos"], "w_neg": prod["w_neg"],
@@ -412,7 +453,15 @@ def main():
                              "equivale_regParam_spark": REG_PARAM,
                              "iteraciones": prod["iteraciones_lbfgs"], "umbral_ponderado": 0.5,
                              "umbral_en_prob_corregida": prod["umbral_en_prob_corregida"],
-                             "predict_proba": "corregida a la tasa base de ene-dic"},
+                             "predict_proba": "corregida a la tasa base de ene-dic",
+                             **{f"{k}_en_entrenamiento": v
+                                for k, v in prod["actual_en_entrenamiento"].items()}},
+            "clasificador_variante_mes": {
+                "archivo": "clasificador_mes.joblib",
+                "cambio": "one-hot de MONTH (reconstruido de month_sin/month_cos dentro del "
+                          "pipeline) ademas de month_sin/month_cos; mismos pesos, correccion, C "
+                          "y escalado",
+                **prod["variante_mes"]},
             "regresor": {"modelo": "HistGradientBoostingRegressor", "arboles": prod["arboles"],
                          "arboles_origen": "fijo: el que eligio el early stopping del modelo de "
                                            "evaluacion (ene-sep entrena, oct valida)",

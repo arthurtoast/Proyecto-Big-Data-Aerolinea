@@ -46,16 +46,19 @@ def main():
     import joblib
     import sklearn.compose, sklearn.ensemble, sklearn.linear_model  # noqa: F401,E401
     from app.ml.features import clima_con_banderas, flight_features
+    from app.ml.modelos import cargar_modelos
     t_imports = time.perf_counter() - t
     t = time.perf_counter()
-    cls = joblib.load(os.path.join(MODELS_DIR, "clasificador.joblib"))
-    reg = joblib.load(os.path.join(MODELS_DIR, "regresor.joblib"))
+    cls, reg = cargar_modelos(MODELS_DIR)   # clasificador segun metadata "clasificador_activo"
     t_modelos = time.perf_counter() - t
     t_carga = t_imports + t_modelos
-    print(f"Imports (pandas, sklearn, joblib): {t_imports:.3f} s | joblib.load de los 2 modelos "
-          f"de produccion: {t_modelos:.3f} s | carga total: {t_carga:.3f} s")
+    import json
+    activo = json.load(open(os.path.join(MODELS_DIR, "metadata.json")))["clasificador_activo"]
+    print(f"Imports (pandas, sklearn, joblib): {t_imports:.3f} s | carga de los 2 modelos de "
+          f"produccion (clasificador_activo={activo}): {t_modelos:.3f} s | carga total: {t_carga:.3f} s")
     ev = os.path.join(MODELS_DIR, "eval")
-    modelos = {"produccion ene-dic": (cls, reg),
+    modelos = {"produccion ene-dic": (joblib.load(os.path.join(MODELS_DIR, "clasificador.joblib")), reg),
+               "variante mes ene-dic": (joblib.load(os.path.join(MODELS_DIR, "clasificador_mes.joblib")), reg),
                "evaluacion ene-oct": (joblib.load(os.path.join(ev, "clasificador_ene_oct.joblib")),
                                       joblib.load(os.path.join(ev, "regresor_ene_oct.joblib")))}
 
@@ -80,12 +83,12 @@ def main():
     print(f"Objetivo por prediccion < 1 s: {'OK' if t_primera < 1 else 'NO'}")
 
     print("\nAA DFW-ORD 18 h, con el clima promedio de DFW de esa semana en 2025:")
-    print(f"{'fecha':<11} {'modelo':<20} {'prob. retraso':>13} {'minutos':>8}")
+    print(f"{'fecha':<11} {'modelo':<21} {'prob. retraso':>13} {'minutos':>8}")
     for fecha, campos, clima in VUELOS:
         X = variables(campos, clima)
         for nombre, (c, r) in modelos.items():
             p, m = predecir(c, r, X)
-            print(f"{fecha:<11} {nombre:<20} {p:>13.3f} {m:>8.1f}")
+            print(f"{fecha:<11} {nombre:<21} {p:>13.3f} {m:>8.1f}")
             assert 0.0 < p < 1.0 and r.p01 <= m <= r.p99
 
     assert not sin_spark.cargados(), sin_spark.cargados()
