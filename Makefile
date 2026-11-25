@@ -1,7 +1,7 @@
 # Atajos para el pipeline. Todo usa el Python del entorno virtual .venv.
 PY := .venv/bin/python
 
-.PHONY: help venv all organize bronze weather silver gold mysql train report predict evaluate export figures summary deliverables app mlflow-ui clean-derived sklearn
+.PHONY: help venv all organize bronze weather silver gold mysql train report predict evaluate export figures summary deliverables app mlflow-ui clean-derived sklearn tablas
 
 help:
 	@echo "make venv        crea .venv (Python 3.12) e instala requirements.txt"
@@ -10,6 +10,7 @@ help:
 	@echo "make deliverables  indicadores + CSV Power BI + figuras + zip de entrega"
 	@echo "make app         demo de la app freemium en http://localhost:8501"
 	@echo "make sklearn     modelos ligeros sklearn (app/models) + verificaciones + smoke test sin pyspark"
+	@echo "make tablas      tablas de apoyo de la app (app/data) + verificacion sin Silver/Gold"
 	@echo "make mlflow-ui   abre la UI de MLflow en http://127.0.0.1:5000"
 	@echo "make clean-derived  borra bronze/silver/gold/models (NO toca data/raw)"
 
@@ -72,6 +73,11 @@ sklearn:
 	$(PY) -m app.ml.train_sklearn
 	$(PY) -m app.ml.verificar
 	$(PY) app/ml/smoke_test.py
+
+# Tablas de apoyo de la app 2026 (catalogos, historial, clima tipico) desde Silver y Gold.
+tablas:
+	$(PY) app/data/build_tablas.py
+	$(PY) app/data/verificar_tablas.py
 
 mlflow-ui:
 	.venv/bin/mlflow ui --backend-store-uri sqlite:///mlflow.db

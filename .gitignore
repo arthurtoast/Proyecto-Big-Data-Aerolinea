@@ -1,8 +1,9 @@
 # Secretos
 .env
 
-# Datos (raw, bronze, silver, gold): se regeneran con el pipeline
-data/
+# Datos (raw, bronze, silver, gold): se regeneran con el pipeline. Solo la carpeta de la raiz:
+# app/data/ (tablas de apoyo de la app) si se versiona.
+/data/
 
 # Entorno virtual
 .venv/

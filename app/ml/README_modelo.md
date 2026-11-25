@@ -236,13 +236,93 @@ Ninguno cierra la brecha de prueba (0.198 contra 0.237) y los dos descalibran el
   Ninguno sale de un aeropuerto que tenga clima otros días: los 50 aeropuertos con clima lo
   tienen los 365 días. Por eso `has_weather=0` en DFW es una combinación que el modelo nunca
   vio.
-- **Para la app:** en esos 50 aeropuertos conviene mandar siempre el clima (pronóstico o
-  promedio histórico) con `clima_con_banderas()`, y reservar `has_weather=0` para los demás.
+- **Para la app:** en esos 50 aeropuertos siempre se manda clima (el pronóstico o los 21 días
+  reales de 2025, ver Paso 2), y `has_weather=0` solo se usa en los demás.
+
+## Paso 2: tablas de apoyo de la app (`app/data/`)
+
+`make tablas` las construye desde Silver y Gold con pandas y pyarrow (`app/data/build_tablas.py`,
+unos 3 s) y las verifica sin Silver ni Gold (`app/data/verificar_tablas.py`). La app solo lee
+estas tablas.
+
+| tabla | filas | MB | contenido |
+|---|---|---|---|
+| `aerolineas.parquet` | 14 | 0.002 | código, nombre, tipo (DIM_AEROLINEA) |
+| `aeropuertos.parquet` | 352 | 0.020 | IATA, nombre, ciudad, estado, latitud, longitud, zona horaria, `tiene_clima` (50 aeropuertos) |
+| `rutas.parquet` | 13,206 | 0.065 | origen, destino, aerolínea, vuelos 2025, DISTANCE (mediana de la ruta) |
+| `horas_ruta.parquet` | 99,641 | 0.191 | origen, destino, aerolínea, `dep_hour`, vuelos 2025 |
+| `historial.parquet` | 13,206 | 0.308 | vuelos programados, completados, cancelados, desviados, tasa de retraso, retraso promedio, tasa de cancelación, `pocos_datos` |
+| `clima_diario.parquet` | 18,250 | 0.101 | clima real de cada día de 2025 en los 50 aeropuertos con clima, con las banderas de Silver |
+
+- **Formato:** Parquet (zstd). Todas las tablas juntas pesan 0.7 MB (en CSV serían unos 5 MB),
+  cargan en 1 a 5 ms cada una y conservan los tipos.
+- **Vuelos:** se cuentan los programados en 2025: completados, cancelados y desviados (7,001,618).
+- **Tasas:** la de retraso y el retraso promedio (minutos sin recortar) salen de los vuelos
+  completados. La de cancelación se calcula sobre los programados.
+- **`pocos_datos`:** vale 1 cuando la combinación tiene menos de 30 vuelos completados (2,201 de
+  13,206 combinaciones). Hay 21 rutas que solo tuvieron cancelados o desviados: no tienen tasa
+  de retraso.
+- **Datos incompletos:** BIH, EAR y XWA no tienen zona horaria, y EAR y XWA tampoco coordenadas.
+  Así vienen de DIM_AEROPUERTO, y ninguno tiene clima.
+
+### Entrada del modelo (`app/ml/entrada.py`)
+
+`cargar_tablas()` carga las tablas una vez (20 ms) y `predecir()` hace la predicción de alto
+nivel. Por dentro, `armar_entrada()` devuelve un **lote** de escenarios:
+
+| caso | escenarios | clima |
+|---|---|---|
+| origen con clima y con pronóstico | 1 | el pronóstico, con banderas de `clima_con_banderas()` |
+| origen con clima, sin pronóstico | 21 | los 21 días reales de 2025 alrededor del mismo día del año (±10 días, dando la vuelta entre diciembre y enero); el 29 de febrero usa el 28 |
+| origen sin clima | 1 | `has_weather=0` |
+
+- **Resultado:** `predecir()` predice todo el lote de una vez y devuelve el promedio de
+  probabilidad y de minutos, el rango (mínimo y máximo) y el texto "según el clima, entre X% y
+  Y%".
+- **Ruta inexistente:** si la combinación no operó en 2025, da error.
+- **Tiempo:** unos 7 ms por consulta.
+
+**Por qué promediar predicciones y no armar un día promedio:** se probaron tres formas de
+convertir el clima típico en entrada del modelo.
+
+| vuelo | opción | banderas (lluvia, nieve, viento) | prob. | minutos |
+|---|---|---|---|---|
+| AA DFW-ORD 15/03/2026 18 h | moda (bandera = 1 si más de la mitad de los días) | 0, 0, 0 | 0.505 | 36.6 |
+| | promedios con los umbrales de Silver | 0, 0, 0 | 0.505 | 36.6 |
+| | **promedio de 21 predicciones** | días reales: 2 con lluvia, 2 con viento | **0.516** (45% a 60%) | **36.2** (28.7 a 76.6) |
+| AA ORD-DFW 15/01/2026 18 h | moda | 0, 0, 0 | 0.420 | 19.1 |
+| | promedios con los umbrales de Silver | 0, 1, 0 | 0.544 | 19.1 |
+| | **promedio de 21 predicciones** | días reales: 5 con lluvia, 10 con nieve | **0.496** (37% a 72%) | **11.7** (0.5 a 47.2) |
+
+- **El problema de un día promedio:** las banderas dependen de la regla. En ORD, con 10 de 21
+  días con nieve, `moda` la apaga y `promedios` la prende, y la probabilidad salta de 0.420 a
+  0.544. En todo el año, `promedios` marca nieve en el 22% de los días-aeropuerto, contra 4.9%
+  de días reales con nieve.
+- **Lo que hace el promedio de predicciones:** usa días que sí ocurrieron, con banderas
+  coherentes con sus variables, y pondera cada situación por su frecuencia real. Además da un
+  rango honesto.
+- **Sensibilidad del regresor:** sube 4.6 min si solo la precipitación pasa de 0.06 a 0.34 mm,
+  otra razón para no depender de un único día promedio.
+
+### Revisión de minutos (regresor de producción)
+
+- **El vuelo de ejemplo:** AA DFW-ORD del 15/03/2026 a las 18 h, con clima de la semana 11 de
+  2025 y entradas idénticas, da 17.76 min con `eval/regresor_ene_oct.joblib` y 30.07 con
+  `regresor.joblib`.
+- **Por mes:** dentro de su entrenamiento, el regresor de producción reproduce los minutos
+  reales (recortados) de cada mes de 2025 con una diferencia máxima de 1.07 min; el total es
+  6.70 en los dos. Ni los 78 árboles fijos ni el recorte causan el cambio.
+- **La causa:** el modelo de evaluación no vio noviembre ni diciembre y en ese periodo predice
+  de menos (1.7 y 2.2 min de media, contra 4.9 y 10.7 reales).
+- **Historia de la ruta:** AA DFW-ORD con salida entre las 17 y las 19 h tuvo 639 vuelos en
+  2025: retraso medio 34.6 min, mediana 13.0, media recortada 32.8 (31.8 predicho). Solo a las
+  18 h: media recortada 39.3. Los 30 min de producción son coherentes con esa historia.
 
 ## Cómo regenerar los modelos
 
 ```bash
 make sklearn   # evaluación ene-oct + comparación con Gold + producción ene-dic + verificaciones + smoke test
+make tablas    # tablas de apoyo de la app en app/data/ + verificación sin Silver/Gold
 ```
 
 Requisitos:
@@ -254,14 +334,19 @@ Requisitos:
 ## Uso en la app
 
 ```python
-from app.ml.features import clima_con_banderas, flight_features
+from datetime import date
+from app.ml.entrada import cargar_tablas, predecir
 from app.ml.modelos import cargar_modelos
 
-cls, reg = cargar_modelos("app/models")   # producción; clasificador según "clasificador_activo"
-clima = clima_con_banderas(precip_mm=0.06, snow_cm=0.0, wind_max_kmh=18.9,
-                           temp_max_c=25.19, temp_min_c=11.37)   # o {"has_weather": 0}
-X = flight_features("AA", "DFW", "ORD", MONTH=3, DAY_OF_WEEK=7, dep_hour=18, DISTANCE=802,
-                    clima=clima)
-prob = cls.predict_proba(X)[0, 1]   # ya corregida a la tasa real
-minutos = reg.predict(X)[0]
+t = cargar_tablas()                        # app/data/*.parquet, una vez al arrancar
+cls, reg = cargar_modelos("app/models")    # producción; clasificador según "clasificador_activo"
+
+# Sin pronóstico: clima típico (21 días reales de 2025) -> promedio y rango.
+r = predecir(t, cls, reg, "AA", "DFW", "ORD", date(2026, 3, 15), 18)
+r["prob"], r["minutos"], r["texto_rango"]  # 0.516, 36.2, "segun el clima, entre 45% y 60%"
+
+# Con pronóstico del día (un solo escenario):
+r = predecir(t, cls, reg, "AA", "DFW", "ORD", date(2026, 3, 15), 18,
+             clima=dict(precip_mm=0.06, snow_cm=0.0, wind_max_kmh=18.9,
+                        temp_max_c=25.19, temp_min_c=11.37))
 ```
