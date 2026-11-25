@@ -1,0 +1,893 @@
+{
+  "sklearn_version": "1.9.1",
+  "pandas_version": "2.3.3",
+  "python_version": "3.12.15",
+  "entrenado_en": "2026-11-24 19:39:07",
+  "variables": {
+    "input_cols": [
+      "OP_UNIQUE_CARRIER",
+      "ORIGIN",
+      "DEST",
+      "DAY_OF_WEEK",
+      "dep_hour",
+      "month_sin",
+      "month_cos",
+      "is_weekend",
+      "DISTANCE",
+      "precip_mm",
+      "snow_cm",
+      "wind_max_kmh",
+      "temp_max_c",
+      "temp_min_c",
+      "rain_flag",
+      "snow_flag",
+      "high_wind_flag",
+      "has_weather"
+    ],
+    "categorical": [
+      "OP_UNIQUE_CARRIER",
+      "ORIGIN",
+      "DEST"
+    ],
+    "cyclic_small": [
+      "DAY_OF_WEEK",
+      "dep_hour"
+    ],
+    "numeric": [
+      "month_sin",
+      "month_cos",
+      "is_weekend",
+      "DISTANCE",
+      "precip_mm",
+      "snow_cm",
+      "wind_max_kmh",
+      "temp_max_c",
+      "temp_min_c",
+      "rain_flag",
+      "snow_flag",
+      "high_wind_flag",
+      "has_weather"
+    ],
+    "leakage_cols_prohibidas": [
+      "DEP_DELAY",
+      "DEP_DEL15",
+      "ARR_DELAY",
+      "ARR_DEL15",
+      "CARRIER_DELAY",
+      "WEATHER_DELAY",
+      "NAS_DELAY",
+      "SECURITY_DELAY",
+      "LATE_AIRCRAFT_DELAY"
+    ]
+  },
+  "recorte_arr_delay": {
+    "p01": -37.0,
+    "p99": 222.0,
+    "fuente": "data/models/clip_and_prior.json (Spark, p01/p99 de ene-oct); se usan en evaluacion y en produccion"
+  },
+  "modelo_produccion": {
+    "nota": "Es el que usa la app. Entrenado con ene-dic 2025 con la misma configuracion que el de evaluacion. NO tiene metrica de prueba propia: no quedan datos de 2025 fuera del entrenamiento. Las metricas de referencia son las del modelo de evaluacion (seccion metricas_prueba).",
+    "archivos": {
+      "clasificador": "clasificador.joblib",
+      "regresor": "regresor.joblib"
+    },
+    "entrenamiento": {
+      "meses": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12
+      ],
+      "fechas": [
+        "2025-01-01",
+        "2025-12-31"
+      ],
+      "filas": 6879484
+    },
+    "pesos_clase": {
+      "w_pos": 2.24140285852429,
+      "w_neg": 0.6435624150817442,
+      "formula": "n/(2*n_clase), recalculados con ene-dic"
+    },
+    "clasificador": {
+      "modelo": "LogisticRegression L2",
+      "C": 0.00014535973918974155,
+      "equivale_regParam_spark": 0.001,
+      "iteraciones": 61,
+      "umbral_ponderado": 0.5,
+      "umbral_en_prob_corregida": 0.22307457943066664,
+      "predict_proba": "corregida a la tasa base de ene-dic"
+    },
+    "regresor": {
+      "modelo": "HistGradientBoostingRegressor",
+      "arboles": 78,
+      "arboles_origen": "fijo: el que eligio el early stopping del modelo de evaluacion (ene-sep entrena, oct valida)",
+      "early_stopping": false,
+      "max_depth": 6,
+      "learning_rate": 0.1,
+      "categoricas_arbol": "top 254 por frecuencia + OTRO"
+    },
+    "metricas_prueba": null,
+    "ajuste_en_entrenamiento": {
+      "nota": "calculado sobre los mismos datos de entrenamiento (ene-dic); NO es una metrica de prueba",
+      "tasa_real": 0.2230745794306666,
+      "prob_media_corregida": 0.2227089816993907,
+      "minutos_reales_media_recortada": 6.703594484702632,
+      "minutos_predichos_media": 6.703594484764283,
+      "por_mes": [
+        {
+          "MONTH": 1,
+          "vuelos": 522269,
+          "tasa_real": 0.1879,
+          "prob_media_corregida": 0.2026,
+          "minutos_reales_media": 2.1743,
+          "minutos_predichos_media": 2.7489
+        },
+        {
+          "MONTH": 2,
+          "vuelos": 496476,
+          "tasa_real": 0.2077,
+          "prob_media_corregida": 0.2134,
+          "minutos_reales_media": 4.1192,
+          "minutos_predichos_media": 4.2019
+        },
+        {
+          "MONTH": 3,
+          "vuelos": 592301,
+          "tasa_real": 0.1959,
+          "prob_media_corregida": 0.2188,
+          "minutos_reales_media": 3.9263,
+          "minutos_predichos_media": 4.9354
+        },
+        {
+          "MONTH": 4,
+          "vuelos": 577730,
+          "tasa_real": 0.1966,
+          "prob_media_corregida": 0.2207,
+          "minutos_reales_media": 4.3244,
+          "minutos_predichos_media": 4.5018
+        },
+        {
+          "MONTH": 5,
+          "vuelos": 597574,
+          "tasa_real": 0.236,
+          "prob_media_corregida": 0.2397,
+          "minutos_reales_media": 8.4253,
+          "minutos_predichos_media": 7.635
+        },
+        {
+          "MONTH": 6,
+          "vuelos": 599472,
+          "tasa_real": 0.2826,
+          "prob_media_corregida": 0.2462,
+          "minutos_reales_media": 13.175,
+          "minutos_predichos_media": 12.6172
+        },
+        {
+          "MONTH": 7,
+          "vuelos": 612811,
+          "tasa_real": 0.2889,
+          "prob_media_corregida": 0.241,
+          "minutos_reales_media": 14.401,
+          "minutos_predichos_media": 13.9594
+        },
+        {
+          "MONTH": 8,
+          "vuelos": 593733,
+          "tasa_real": 0.2256,
+          "prob_media_corregida": 0.236,
+          "minutos_reales_media": 7.3063,
+          "minutos_predichos_media": 7.7543
+        },
+        {
+          "MONTH": 9,
+          "vuelos": 558328,
+          "tasa_real": 0.1663,
+          "prob_media_corregida": 0.2203,
+          "minutos_reales_media": 1.1078,
+          "minutos_predichos_media": 2.1756
+        },
+        {
+          "MONTH": 10,
+          "vuelos": 601570,
+          "tasa_real": 0.2032,
+          "prob_media_corregida": 0.2132,
+          "minutos_reales_media": 4.299,
+          "minutos_predichos_media": 4.1108
+        },
+        {
+          "MONTH": 11,
+          "vuelos": 555296,
+          "tasa_real": 0.2056,
+          "prob_media_corregida": 0.2073,
+          "minutos_reales_media": 4.8511,
+          "minutos_predichos_media": 4.6402
+        },
+        {
+          "MONTH": 12,
+          "vuelos": 571924,
+          "tasa_real": 0.2677,
+          "prob_media_corregida": 0.2068,
+          "minutos_reales_media": 10.6978,
+          "minutos_predichos_media": 9.6559
+        }
+      ]
+    },
+    "tiempos_s": {
+      "clasificador": 18.91639494895935,
+      "regresor": 23.035582065582275
+    }
+  },
+  "modelo_evaluacion": {
+    "nota": "Entrenado con ene-oct y evaluado con nov-dic. De aqui salen TODAS las metricas reportadas (metricas_prueba, tabla_comparacion, verificaciones).",
+    "archivos": {
+      "clasificador": "eval/clasificador_ene_oct.joblib",
+      "regresor": "eval/regresor_ene_oct.joblib"
+    },
+    "split": {
+      "entrenamiento": {
+        "meses": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10
+        ],
+        "fechas": [
+          "2025-01-01",
+          "2025-10-31"
+        ],
+        "filas": 5752264
+      },
+      "prueba": {
+        "meses": [
+          11,
+          12
+        ],
+        "fechas": [
+          "2025-11-01",
+          "2025-12-31"
+        ],
+        "filas": 1127220
+      },
+      "validacion_early_stopping": "octubre 2025 (dentro de entrenamiento)"
+    },
+    "pesos_clase": {
+      "w_pos": 2.2693972880526765,
+      "w_neg": 0.6412910496065807,
+      "formula": "n/(2*n_clase) con ene-oct (iguales a Spark)"
+    },
+    "clasificador": {
+      "modelo": "LogisticRegression L2",
+      "C": 0.0001738445940589653,
+      "equivale_regParam_spark": 0.001,
+      "iteraciones": 85,
+      "umbral_ponderado": 0.5,
+      "umbral_en_prob_corregida": 0.22032281550359997
+    },
+    "regresor": {
+      "modelo": "HistGradientBoostingRegressor",
+      "arboles": 78,
+      "max_depth": 6,
+      "learning_rate": 0.1,
+      "muestra_entrenamiento": 1.0
+    },
+    "tiempos_s": {
+      "clasificador": 19.203036069869995,
+      "regresor_final": 19.257201194763184,
+      "regresor_early_stopping": 16.75458288192749
+    }
+  },
+  "metricas_prueba": {
+    "nota": "modelo de evaluacion (ene-oct) sobre la prueba nov-dic",
+    "sklearn_clasificador": {
+      "roc_auc": 0.658852611535869,
+      "precision": 0.37104743546817454,
+      "recall": 0.443634649416536,
+      "f1": 0.40410732482014267,
+      "accuracy": 0.68976597292454,
+      "mean_prob_corrected": 0.1787769576021297,
+      "real_delay_rate_test": 0.23711697805219922,
+      "mean_prob_raw": 0.40893835481010277
+    },
+    "sklearn_confusion": {
+      "tn": 658942,
+      "fp": 200995,
+      "fn": 148707,
+      "tp": 118576
+    },
+    "sklearn_regresor": {
+      "mae": 24.5543046105982,
+      "rmse": 42.29414606809409,
+      "r2": 0.06452434825937048,
+      "rmse_sin_recorte": 60.808011212110635
+    },
+    "spark_clasificador": {
+      "roc_auc": 0.6588532360656064,
+      "precision": 0.3710556619478553,
+      "recall": 0.44364587347493106,
+      "f1": 0.4041168602124886,
+      "accuracy": 0.6897704086158869,
+      "mean_prob_corrected": 0.17877640774250023,
+      "real_delay_rate_test": 0.23711697805219922
+    },
+    "spark_confusion": {
+      "tn": 658944,
+      "fp": 200993,
+      "fn": 148704,
+      "tp": 118579
+    },
+    "spark_regresor": {
+      "mae": 24.805957133478824,
+      "rmse": 42.683767253387146,
+      "r2": 0.04720942415064566,
+      "rmse_sin_recorte": 61.01686024698152
+    },
+    "diff_auc": 6.245297373697056e-07,
+    "diff_mae": 0.25165252288062234,
+    "corr_prob": 0.9999999992052926,
+    "corr_min": 0.8385028521645538
+  },
+  "tabla_comparacion": [
+    {
+      "modelo": "Spark LogisticRegression",
+      "roc_auc": 0.6588532360656064,
+      "f1": 0.4041168602124886,
+      "mae": null,
+      "rmse": null,
+      "train_s": 27.93,
+      "disk_mb": 0.023324012756347656
+    },
+    {
+      "modelo": "sklearn LogisticRegression",
+      "roc_auc": 0.658852611535869,
+      "f1": 0.40410732482014267,
+      "mae": null,
+      "rmse": null,
+      "train_s": 19.203036069869995,
+      "disk_mb": 0.025693893432617188
+    },
+    {
+      "modelo": "Spark GBTRegressor (30%)",
+      "roc_auc": null,
+      "f1": null,
+      "mae": 24.805957133478824,
+      "rmse": 42.683767253387146,
+      "train_s": 72.15,
+      "disk_mb": 0.578150749206543
+    },
+    {
+      "modelo": "sklearn HistGradientBoosting (100%)",
+      "roc_auc": null,
+      "f1": null,
+      "mae": 24.5543046105982,
+      "rmse": 42.29414606809409,
+      "train_s": 19.257201194763184,
+      "disk_mb": 0.2666282653808594
+    }
+  ],
+  "verificaciones": {
+    "nota": "modelo de evaluacion (ene-oct); prueba nov-dic",
+    "calibracion": {
+      "actual_entrenamiento": {
+        "prob_media": 0.2198292251237621,
+        "tasa_real": 0.22032281550359997,
+        "brier": 0.15819070337791422,
+        "roc_auc": 0.6872071270685352,
+        "deciles": [
+          {
+            "decil": 1,
+            "n": 575227,
+            "prob_media": 0.0685,
+            "tasa_real": 0.0803
+          },
+          {
+            "decil": 2,
+            "n": 575228,
+            "prob_media": 0.103,
+            "tasa_real": 0.1054
+          },
+          {
+            "decil": 3,
+            "n": 575224,
+            "prob_media": 0.1315,
+            "tasa_real": 0.1293
+          },
+          {
+            "decil": 4,
+            "n": 575227,
+            "prob_media": 0.16,
+            "tasa_real": 0.1513
+          },
+          {
+            "decil": 5,
+            "n": 575226,
+            "prob_media": 0.189,
+            "tasa_real": 0.1767
+          },
+          {
+            "decil": 6,
+            "n": 575226,
+            "prob_media": 0.219,
+            "tasa_real": 0.2068
+          },
+          {
+            "decil": 7,
+            "n": 575227,
+            "prob_media": 0.2516,
+            "tasa_real": 0.2414
+          },
+          {
+            "decil": 8,
+            "n": 575226,
+            "prob_media": 0.2895,
+            "tasa_real": 0.2875
+          },
+          {
+            "decil": 9,
+            "n": 575226,
+            "prob_media": 0.34,
+            "tasa_real": 0.3534
+          },
+          {
+            "decil": 10,
+            "n": 575227,
+            "prob_media": 0.4461,
+            "tasa_real": 0.4712
+          }
+        ]
+      },
+      "actual_prueba": {
+        "prob_media": 0.1787769576021297,
+        "tasa_real": 0.23711697805219922,
+        "brier": 0.1731396531800277,
+        "roc_auc": 0.658852611535869,
+        "deciles": [
+          {
+            "decil": 1,
+            "n": 112722,
+            "prob_media": 0.0543,
+            "tasa_real": 0.1012
+          },
+          {
+            "decil": 2,
+            "n": 112722,
+            "prob_media": 0.0807,
+            "tasa_real": 0.1321
+          },
+          {
+            "decil": 3,
+            "n": 112722,
+            "prob_media": 0.103,
+            "tasa_real": 0.1583
+          },
+          {
+            "decil": 4,
+            "n": 112722,
+            "prob_media": 0.126,
+            "tasa_real": 0.1821
+          },
+          {
+            "decil": 5,
+            "n": 112722,
+            "prob_media": 0.1499,
+            "tasa_real": 0.2071
+          },
+          {
+            "decil": 6,
+            "n": 112722,
+            "prob_media": 0.1743,
+            "tasa_real": 0.23
+          },
+          {
+            "decil": 7,
+            "n": 112722,
+            "prob_media": 0.2007,
+            "tasa_real": 0.2628
+          },
+          {
+            "decil": 8,
+            "n": 112722,
+            "prob_media": 0.232,
+            "tasa_real": 0.2949
+          },
+          {
+            "decil": 9,
+            "n": 112722,
+            "prob_media": 0.2755,
+            "tasa_real": 0.3429
+          },
+          {
+            "decil": 10,
+            "n": 112722,
+            "prob_media": 0.3914,
+            "tasa_real": 0.4597
+          }
+        ]
+      },
+      "brier_tasa_constante_prueba": 0.18117456066730087,
+      "platt_octubre": {
+        "a": 0.9593540957008415,
+        "b": 0.07486981234835237
+      },
+      "platt_entrenamiento": {
+        "prob_media": 0.23988877659954144,
+        "tasa_real": 0.22032281550359997,
+        "brier": 0.15860488740459203,
+        "roc_auc": 0.6872071270685352,
+        "deciles": [
+          {
+            "decil": 1,
+            "n": 575227,
+            "prob_media": 0.0809,
+            "tasa_real": 0.0803
+          },
+          {
+            "decil": 2,
+            "n": 575228,
+            "prob_media": 0.119,
+            "tasa_real": 0.1054
+          },
+          {
+            "decil": 3,
+            "n": 575224,
+            "prob_media": 0.1498,
+            "tasa_real": 0.1293
+          },
+          {
+            "decil": 4,
+            "n": 575227,
+            "prob_media": 0.18,
+            "tasa_real": 0.1513
+          },
+          {
+            "decil": 5,
+            "n": 575226,
+            "prob_media": 0.2104,
+            "tasa_real": 0.1767
+          },
+          {
+            "decil": 6,
+            "n": 575226,
+            "prob_media": 0.2414,
+            "tasa_real": 0.2068
+          },
+          {
+            "decil": 7,
+            "n": 575227,
+            "prob_media": 0.2746,
+            "tasa_real": 0.2414
+          },
+          {
+            "decil": 8,
+            "n": 575226,
+            "prob_media": 0.3129,
+            "tasa_real": 0.2875
+          },
+          {
+            "decil": 9,
+            "n": 575226,
+            "prob_media": 0.3632,
+            "tasa_real": 0.3534
+          },
+          {
+            "decil": 10,
+            "n": 575227,
+            "prob_media": 0.4665,
+            "tasa_real": 0.4712
+          }
+        ]
+      },
+      "platt_prueba": {
+        "prob_media": 0.1975851055174942,
+        "tasa_real": 0.23711697805219922,
+        "brier": 0.17125684620787887,
+        "roc_auc": 0.658852611535869,
+        "deciles": [
+          {
+            "decil": 1,
+            "n": 112722,
+            "prob_media": 0.0649,
+            "tasa_real": 0.1012
+          },
+          {
+            "decil": 2,
+            "n": 112722,
+            "prob_media": 0.0945,
+            "tasa_real": 0.1321
+          },
+          {
+            "decil": 3,
+            "n": 112722,
+            "prob_media": 0.1191,
+            "tasa_real": 0.1583
+          },
+          {
+            "decil": 4,
+            "n": 112722,
+            "prob_media": 0.1439,
+            "tasa_real": 0.1821
+          },
+          {
+            "decil": 5,
+            "n": 112722,
+            "prob_media": 0.1694,
+            "tasa_real": 0.2071
+          },
+          {
+            "decil": 6,
+            "n": 112722,
+            "prob_media": 0.1951,
+            "tasa_real": 0.23
+          },
+          {
+            "decil": 7,
+            "n": 112722,
+            "prob_media": 0.2225,
+            "tasa_real": 0.2628
+          },
+          {
+            "decil": 8,
+            "n": 112722,
+            "prob_media": 0.2547,
+            "tasa_real": 0.2949
+          },
+          {
+            "decil": 9,
+            "n": 112722,
+            "prob_media": 0.2988,
+            "tasa_real": 0.3429
+          },
+          {
+            "decil": 10,
+            "n": 112722,
+            "prob_media": 0.413,
+            "tasa_real": 0.4597
+          }
+        ]
+      },
+      "isotonica_entrenamiento": {
+        "prob_media": 0.23983432645735875,
+        "tasa_real": 0.22032281550359997,
+        "brier": 0.15866432182117585,
+        "roc_auc": 0.6870767348332953,
+        "deciles": [
+          {
+            "decil": 1,
+            "n": 694011,
+            "prob_media": 0.0868,
+            "tasa_real": 0.0829
+          },
+          {
+            "decil": 2,
+            "n": 543501,
+            "prob_media": 0.1237,
+            "tasa_real": 0.1096
+          },
+          {
+            "decil": 3,
+            "n": 569138,
+            "prob_media": 0.1515,
+            "tasa_real": 0.1326
+          },
+          {
+            "decil": 4,
+            "n": 497211,
+            "prob_media": 0.1762,
+            "tasa_real": 0.1531
+          },
+          {
+            "decil": 5,
+            "n": 689438,
+            "prob_media": 0.2146,
+            "tasa_real": 0.1799
+          },
+          {
+            "decil": 6,
+            "n": 487363,
+            "prob_media": 0.2482,
+            "tasa_real": 0.2104
+          },
+          {
+            "decil": 7,
+            "n": 573979,
+            "prob_media": 0.2794,
+            "tasa_real": 0.2433
+          },
+          {
+            "decil": 8,
+            "n": 547848,
+            "prob_media": 0.3146,
+            "tasa_real": 0.289
+          },
+          {
+            "decil": 9,
+            "n": 597063,
+            "prob_media": 0.3669,
+            "tasa_real": 0.3554
+          },
+          {
+            "decil": 10,
+            "n": 552712,
+            "prob_media": 0.466,
+            "tasa_real": 0.4739
+          }
+        ]
+      },
+      "isotonica_prueba": {
+        "prob_media": 0.19746931616429178,
+        "tasa_real": 0.23711697805219922,
+        "brier": 0.17116060149865306,
+        "roc_auc": 0.6587703146046051,
+        "deciles": [
+          {
+            "decil": 1,
+            "n": 130889,
+            "prob_media": 0.0693,
+            "tasa_real": 0.1041
+          },
+          {
+            "decil": 2,
+            "n": 108216,
+            "prob_media": 0.0996,
+            "tasa_real": 0.1356
+          },
+          {
+            "decil": 3,
+            "n": 134682,
+            "prob_media": 0.1235,
+            "tasa_real": 0.1632
+          },
+          {
+            "decil": 4,
+            "n": 105959,
+            "prob_media": 0.1492,
+            "tasa_real": 0.1899
+          },
+          {
+            "decil": 5,
+            "n": 89739,
+            "prob_media": 0.1686,
+            "tasa_real": 0.2106
+          },
+          {
+            "decil": 6,
+            "n": 108605,
+            "prob_media": 0.1916,
+            "tasa_real": 0.2311
+          },
+          {
+            "decil": 7,
+            "n": 114549,
+            "prob_media": 0.2251,
+            "tasa_real": 0.2631
+          },
+          {
+            "decil": 8,
+            "n": 133646,
+            "prob_media": 0.2629,
+            "tasa_real": 0.3005
+          },
+          {
+            "decil": 9,
+            "n": 95956,
+            "prob_media": 0.308,
+            "tasa_real": 0.3514
+          },
+          {
+            "decil": 10,
+            "n": 104979,
+            "prob_media": 0.4182,
+            "tasa_real": 0.4655
+          }
+        ]
+      },
+      "decision": "sin calibracion adicional: en entrenamiento la prob. media corregida (0.2198) queda a menos de 0.01 de la tasa real (0.2203); la brecha en prueba es cambio de tasa entre periodos (oct 20.3%, nov-dic 23.7%), que un calibrador de octubre no corrige"
+    },
+    "baseline_minutos": {
+      "tabla": [
+        {
+          "modelo": "siempre la mediana de entrenamiento (-6.0)",
+          "mae": 24.859466652472456,
+          "rmse": 45.85959656975684,
+          "rmse_sin_recorte": 63.84659207923878,
+          "pred_media": -6.0,
+          "pred_p5_p50_p95": [
+            -6.0,
+            -6.0,
+            -6.0
+          ],
+          "entren_s": null
+        },
+        {
+          "modelo": "siempre la media de entrenamiento (6.49)",
+          "mae": 27.377687790041023,
+          "rmse": 43.748734463908015,
+          "rmse_sin_recorte": 61.95820666450821,
+          "pred_media": 6.485294311943958,
+          "pred_p5_p50_p95": [
+            6.5,
+            6.5,
+            6.5
+          ],
+          "entren_s": null
+        },
+        {
+          "modelo": "HGB squared_error (regresor.joblib)",
+          "mae": 24.5543046105982,
+          "rmse": 42.29414606809409,
+          "rmse_sin_recorte": 60.808011212110635,
+          "pred_media": 1.9368848483844725,
+          "pred_p5_p50_p95": [
+            -9.7,
+            -0.1,
+            19.9
+          ],
+          "entren_s": null
+        },
+        {
+          "modelo": "HGB absolute_error (104 arboles)",
+          "mae": 24.11481289261947,
+          "rmse": 45.0558173440875,
+          "rmse_sin_recorte": 63.18280061835568,
+          "pred_media": -7.56388654409555,
+          "pred_p5_p50_p95": [
+            -15.2,
+            -8.8,
+            3.5
+          ],
+          "entren_s": 37.115238904953
+        }
+      ],
+      "mediana_prueba": -5.0,
+      "media_prueba": 7.81759195188162,
+      "hgb_gana_claramente_mae_a_mediana": false,
+      "decision": "se mantiene squared_error en regresor.joblib: es el unico que gana a ambas baselines en MAE y en RMSE; absolute_error baja el MAE 0.44 min pero su RMSE (45.06) es peor que predecir siempre la media (43.75) y predice la mediana condicional (casi siempre antes de hora), no los minutos esperados"
+    },
+    "clima": {
+      "ejemplo_aa_dfw_ord_20260315_18h": {
+        "sin_clima": {
+          "prob": 0.4747,
+          "minutos": 16.76
+        },
+        "con_clima": {
+          "prob": 0.467,
+          "minutos": 17.76
+        }
+      },
+      "dfw_semana11_2025": {
+        "fechas": [
+          "2025-03-10",
+          "2025-03-16"
+        ],
+        "promedio": {
+          "precip_mm": 0.06,
+          "snow_cm": 0.0,
+          "wind_max_kmh": 18.9,
+          "temp_max_c": 25.19,
+          "temp_min_c": 11.37
+        }
+      },
+      "entrenamiento_has_weather_0": 1241903,
+      "entrenamiento_has_weather_0_en_aeropuertos_con_clima": 0,
+      "aeropuertos_con_clima": 50,
+      "dias_por_aeropuerto": [
+        365,
+        365
+      ]
+    }
+  }
+}
