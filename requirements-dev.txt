@@ -1,0 +1,2 @@
+# Solo para desarrollo: capturas de la app (make capturas) con el Google Chrome instalado.
+playwright>=1.50

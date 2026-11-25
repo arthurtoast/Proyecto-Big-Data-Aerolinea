@@ -42,6 +42,8 @@ source .venv/bin/activate
 `pandas` queda fijado en `<3` porque PySpark 4.0 no es compatible con pandas 3 (falla la
 conversion con Arrow entre Spark y pandas).
 
+Solo para tomar las capturas de la app (`make capturas`): `.venv/bin/pip install -r requirements-dev.txt`.
+
 ### MySQL (opcional)
 
 ```zsh

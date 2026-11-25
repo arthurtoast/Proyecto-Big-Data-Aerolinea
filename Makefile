@@ -1,16 +1,20 @@
 # Atajos para el pipeline. Todo usa el Python del entorno virtual .venv.
 PY := .venv/bin/python
 
-.PHONY: help venv all organize bronze weather silver gold mysql train report predict evaluate export figures summary deliverables app mlflow-ui clean-derived sklearn tablas
+.PHONY: help venv all organize bronze weather silver gold mysql train report predict evaluate export figures summary deliverables app mlflow-ui clean-derived sklearn tablas test test-red app-fase3 capturas
 
 help:
 	@echo "make venv        crea .venv (Python 3.12) e instala requirements.txt"
 	@echo "make all         corre el pipeline completo (python -m src.run_pipeline)"
 	@echo "make organize | bronze | weather | silver | gold | mysql | train | report | predict"
 	@echo "make deliverables  indicadores + CSV Power BI + figuras + zip de entrega"
-	@echo "make app         demo de la app freemium en http://localhost:8501"
+	@echo "make app         app de la Fase 4 (sklearn, sin Spark) en http://localhost:8501"
+	@echo "make app-fase3   demo de la Fase 3 (usa Spark)"
+	@echo "make capturas    capturas de la app en deliverables/fase4/capturas (requiere playwright)"
 	@echo "make sklearn     modelos ligeros sklearn (app/models) + verificaciones + smoke test sin pyspark"
 	@echo "make tablas      tablas de apoyo de la app (app/data) + verificacion sin Silver/Gold"
+	@echo "make test        pruebas de la app sin red (pytest app/tests)"
+	@echo "make test-red    prueba real del pronostico de Open-Meteo (requiere internet)"
 	@echo "make mlflow-ui   abre la UI de MLflow en http://127.0.0.1:5000"
 	@echo "make clean-derived  borra bronze/silver/gold/models (NO toca data/raw)"
 
@@ -66,7 +70,13 @@ deliverables: evaluate export figures summary
 	zip -r -X deliverables_fase3.zip deliverables -x "*.DS_Store"
 
 app:
+	.venv/bin/streamlit run app/streamlit_app.py
+
+app-fase3:
 	.venv/bin/streamlit run app/demo_app.py
+
+capturas:
+	$(PY) app/tests/capturas_app.py
 
 # Modelos ligeros scikit-learn para la app 2026 (sin Spark) + prueba de carga.
 sklearn:
@@ -77,7 +87,15 @@ sklearn:
 # Tablas de apoyo de la app 2026 (catalogos, historial, clima tipico) desde Silver y Gold.
 tablas:
 	$(PY) app/data/build_tablas.py
+	$(PY) app/data/build_referencia.py
 	$(PY) app/data/verificar_tablas.py
+
+# Pruebas de la app sin red (respuestas simuladas) y prueba real del pronostico.
+test:
+	$(PY) -m pytest app/tests -q
+
+test-red:
+	$(PY) app/tests/prueba_red_clima.py
 
 mlflow-ui:
 	.venv/bin/mlflow ui --backend-store-uri sqlite:///mlflow.db

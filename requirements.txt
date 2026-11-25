@@ -2,6 +2,7 @@ pyspark>=4.0,<4.1
 pandas>=2.2,<3  # PySpark 4.0 no es compatible con pandas 3 (falla la conversion con Arrow)
 pyarrow>=15
 scikit-learn>=1.9,<1.10  # app/models/*.joblib se guardaron con 1.9.1: cargar con la misma version menor
+pytest>=8,<10  # make test (app/tests)
 requests>=2.32
 python-dotenv>=1.0
 sqlalchemy>=2.0

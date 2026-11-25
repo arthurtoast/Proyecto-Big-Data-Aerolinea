@@ -76,19 +76,9 @@ def make_features(raw: pd.DataFrame) -> pd.DataFrame:
     return df[INPUT_COLS]
 
 
-# Umbrales de banderas de clima, copiados de src/silver.py (RAIN_MM, SNOW_CM, HIGH_WIND_KMH).
-RAIN_MM = 1.0
-SNOW_CM = 0.0
-HIGH_WIND_KMH = 30.0
-
-
-def clima_con_banderas(precip_mm, snow_cm, wind_max_kmh, temp_max_c, temp_min_c) -> dict:
-    """Clima del origen (pronostico o promedio) -> dict listo para flight_features, con las
-    banderas calculadas con las mismas reglas que Silver y has_weather=1."""
-    return {"precip_mm": precip_mm, "snow_cm": snow_cm, "wind_max_kmh": wind_max_kmh,
-            "temp_max_c": temp_max_c, "temp_min_c": temp_min_c,
-            "rain_flag": int(precip_mm >= RAIN_MM), "snow_flag": int(snow_cm > SNOW_CM),
-            "high_wind_flag": int(wind_max_kmh >= HIGH_WIND_KMH), "has_weather": 1}
+# Umbrales de banderas de clima (copiados de src/silver.py) y clima_con_banderas(): viven en
+# app/ml/umbrales.py (solo biblioteca estandar, lo usa app/weather.py) y se reexportan aqui.
+from app.ml.umbrales import HIGH_WIND_KMH, RAIN_MM, SNOW_CM, clima_con_banderas  # noqa: E402,F401
 
 
 def flight_features(aerolinea, origen, destino, MONTH, DAY_OF_WEEK, dep_hour, DISTANCE,

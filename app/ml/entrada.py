@@ -14,6 +14,7 @@ Regla de clima (Paso 2):
 El 29 de febrero usa el dia 28.
 """
 import os
+import time
 from datetime import date
 
 import numpy as np
@@ -100,3 +101,57 @@ def predecir(t, cls, reg, aerolinea, origen, destino, fecha: date, dep_hour, cli
             "texto_rango": (f"segun el clima, entre {100 * p.min():.0f}% y {100 * p.max():.0f}%"
                             if len(p) > 1 else None),
             **info}
+
+
+def aeropuertos_para_clima(t):
+    """Tabla aeropuertos -> dict que espera app.weather.ClienteClima."""
+    a = t["aeropuertos"]
+    return {r.iata: {"lat": None if pd.isna(r.latitud) else float(r.latitud),
+                     "lon": None if pd.isna(r.longitud) else float(r.longitud),
+                     "tiene_clima": bool(r.tiene_clima),
+                     "zona_horaria": None if pd.isna(r.zona_horaria) else r.zona_horaria}
+            for r in a.itertuples()}
+
+
+def predecir_vuelo(t, cls, reg, cliente, aerolinea, origen, destino, fecha: date, dep_hour):
+    """Prediccion completa para la app: decide el clima con app.weather (pronostico, clima
+    tipico o sin datos) y predice. Devuelve lo de predecir() mas la fuente del clima, la hora
+    de consulta del pronostico, el motivo si cayo a clima tipico y los tiempos por separado."""
+    t0 = time.perf_counter()
+    c = cliente.obtener_clima(origen, fecha)          # FechaPasadaError si la fecha ya paso
+    t_clima = time.perf_counter() - t0
+    pron = None
+    if c["clima"] is not None and c["clima"].get("has_weather") == 1:
+        pron = {k: c["clima"][k] for k in WEATHER_NUM}
+    t0 = time.perf_counter()
+    r = predecir(t, cls, reg, aerolinea, origen, destino, fecha, dep_hour, clima=pron)
+    t_pred = time.perf_counter() - t0
+    return {**r, "fuente_clima": c["fuente"], "detalle_clima": r["fuente_clima"],
+            "clima_pronostico": c["clima"] if pron else None,
+            "consultado_en": c["consultado_en"], "desde_cache": c["desde_cache"],
+            "motivo_clima": c["motivo"], "tiempo_clima_s": t_clima, "tiempo_prediccion_s": t_pred}
+
+
+def horas_de_ruta(t, aerolinea, origen, destino):
+    """Horas de salida programadas que tuvo la ruta y aerolinea en 2025, con sus vuelos."""
+    h = t["horas_ruta"]
+    h = h[(h["origen"] == origen) & (h["destino"] == destino) & (h["aerolinea"] == aerolinea)]
+    return h[["dep_hour", "vuelos"]].sort_values("dep_hour").reset_index(drop=True)
+
+
+def predecir_horas(t, cls, reg, aerolinea, origen, destino, fecha: date, horas, clima=None):
+    """Predice TODAS las horas indicadas del mismo dia, ruta y aerolinea en un solo lote
+    (horas x escenarios de clima filas). -> (DataFrame por hora con prob, minutos y rango,
+    X de cada hora, info). Lo usa la app para la prediccion principal y la sugerencia."""
+    X1, info = armar_entrada(t, aerolinea, origen, destino, fecha, int(horas[0]), clima)
+    n = len(X1)
+    X = pd.concat([X1] * len(horas), ignore_index=True)
+    X["dep_hour"] = np.repeat(np.asarray(horas, dtype="int8"), n)
+    p = cls.predict_proba(X)[:, 1]
+    m = reg.predict(X)
+    hora = np.repeat(np.asarray(horas), n)
+    res = (pd.DataFrame({"dep_hour": hora, "prob": p, "minutos": m})
+           .groupby("dep_hour", sort=True)
+           .agg(prob=("prob", "mean"), prob_min=("prob", "min"), prob_max=("prob", "max"),
+                minutos=("minutos", "mean")).reset_index())
+    return res, X, info
