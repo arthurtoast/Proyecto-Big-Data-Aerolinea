@@ -1,0 +1,14 @@
+# Dependencias SOLO de la app de la Fase 4 (app/streamlit_app.py), para Streamlit Community
+# Cloud: sin pyspark ni mlflow. Versiones exactas del entorno donde se guardaron los modelos:
+# los .joblib de app/models se guardaron con scikit-learn 1.9.1 (ver app/models/metadata.json)
+# y deben cargarse con la misma version; numpy y scipy van fijos por la misma razon.
+# Python 3.12 (se elige en Advanced settings de Community Cloud).
+streamlit==1.65.0
+pandas==2.3.3
+pyarrow==25.0.1
+scikit-learn==1.9.1
+numpy==2.5.3
+scipy==1.18.1
+joblib==1.6.0
+requests==2.34.2
+tzdata==2026.4

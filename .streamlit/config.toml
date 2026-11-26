@@ -1,6 +1,12 @@
-# Configuracion de la demo (make app). El color primario es el azul de las figuras del proyecto.
+# Configuracion de la app (make app y Streamlit Community Cloud, que la lee desde la raiz del
+# repo). Tema claro y sobrio; el color primario es el azul de las figuras del proyecto.
 [theme]
+base = "light"
 primaryColor = "#2a78d6"
+backgroundColor = "#ffffff"
+secondaryBackgroundColor = "#f3f5f8"
+textColor = "#1f2937"
+font = "sans serif"
 
 [browser]
 gatherUsageStats = false

@@ -13,7 +13,8 @@ Uso: make app   (o: .venv/bin/streamlit run app/streamlit_app.py)
 import os
 import sys
 import time
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
+from zoneinfo import ZoneInfo
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if ROOT not in sys.path:
@@ -30,7 +31,7 @@ from app.ml.entrada import (aeropuertos_para_clima, cargar_tablas, horas_de_ruta
 from app.ml.features import WEATHER_NUM  # noqa: E402
 from app.ml.modelos import cargar_modelos  # noqa: E402
 from app.weather import (FUENTE_PRONOSTICO, FUENTE_SIN_DATOS, FUENTE_TIPICO,  # noqa: E402
-                         FUENTE_TIPICO_FALLA, ClienteClima, FechaPasadaError)
+                         FUENTE_TIPICO_FALLA, ZONA_RESPALDO, ClienteClima, FechaPasadaError)
 
 MODELS_DIR = os.path.join(ROOT, "app", "models")
 DATA_DIR = os.path.join(ROOT, "app", "data")
@@ -165,7 +166,10 @@ with st.container(border=True):
     aerolinea = st.selectbox("Aerolínea", aerolineas, format_func=etiqueta_aer,
                              index=indice(aerolineas, qp.get("aerolinea", "AA")))
     col3, col4 = st.columns(2)
-    hoy = date.today()
+    # El servidor (Streamlit Cloud) corre en UTC: "hoy" para el calendario se toma en la zona
+    # mas atrasada de EE. UU. para no ocultar vuelos de hoy por la tarde. Si la fecha ya paso
+    # en el aeropuerto de origen, obtener_clima() lo detecta con su zona horaria.
+    hoy = datetime.now(ZoneInfo(ZONA_RESPALDO)).date()
     try:
         f_qp = date.fromisoformat(qp.get("fecha", ""))
     except ValueError:

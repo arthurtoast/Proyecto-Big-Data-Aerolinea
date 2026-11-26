@@ -140,10 +140,42 @@ predict("AA", "ORD", "LGA", "2025-12-22", "17:45")
 Acepta la aerolinea por codigo (`AA`) o nombre (`American Airlines`) y la hora como `17` o
 `"17:45"`. Si la ruta no tiene historial, usa la distancia en linea recta entre aeropuertos.
 
-## Demo de la app freemium
+## App de la Fase 4 (vuelos 2026, sin Spark)
+
+`app/streamlit_app.py` predice vuelos futuros con los modelos scikit-learn de `app/models`, las
+tablas de `app/data` y el pronostico de Open-Meteo (`app/weather.py`). No usa Spark ni lee
+Silver/Gold, y sus dependencias estan en `app/requirements.txt` (sin pyspark ni mlflow).
+Detalle de los modelos y las tablas: `app/ml/README_modelo.md`.
+
+Correr local:
 
 ```zsh
-make app        # o: .venv/bin/streamlit run app/demo_app.py  ->  http://localhost:8501
+make app        # o: .venv/bin/streamlit run app/streamlit_app.py  ->  http://localhost:8501
+```
+
+Solo con las dependencias de la app, en un entorno limpio:
+
+```zsh
+python3.12 -m venv .venv-app && .venv-app/bin/pip install -r app/requirements.txt
+.venv-app/bin/streamlit run app/streamlit_app.py
+```
+
+Publicar en Streamlit Community Cloud (share.streamlit.io):
+
+1. Entrar con la cuenta de GitHub que tiene acceso al repo y elegir **Create app** y luego
+   **Deploy a public app from GitHub**.
+2. Repositorio `arthurtoast/Proyecto-Big-Data-Aerolinea`, rama `main`, archivo principal
+   `app/streamlit_app.py`.
+3. En **Advanced settings**, Python **3.12**. No hacen falta secretos.
+4. **Deploy**. Community Cloud instala `app/requirements.txt` (el que esta junto al archivo
+   principal) y toma el tema de `.streamlit/config.toml`.
+
+`app/models` y `app/data` estan en el repo (1.4 MB entre los dos); `.env` y `/data` no.
+
+## Demo de la app freemium (Fase 3, con Spark)
+
+```zsh
+make app-fase3  # o: .venv/bin/streamlit run app/demo_app.py  ->  http://localhost:8501
 ```
 
 Requiere haber corrido el pipeline (usa los modelos de `data/models` y los catalogos de Gold y
